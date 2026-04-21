@@ -1,7 +1,8 @@
 package com.tedu.util;
 
 import java.awt.Graphics;
-import java.awt.Image;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -22,6 +23,7 @@ import javax.imageio.ImageIO;
  */
 public final class GameImage {
     private static final Map<String, BufferedImage> CACHE = new ConcurrentHashMap<>();
+    private static final Map<String, BufferedImage> SCALED_CACHE = new ConcurrentHashMap<>();
     private static final BufferedImage EMPTY = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
 
     private GameImage() {}
@@ -73,9 +75,34 @@ public final class GameImage {
     }
 
     public static void draw(Graphics g, BufferedImage image, int x, int y, int w, int h) {
-        if (image == null) {
+        if (image == null || w <= 0 || h <= 0) {
             return;
         }
-        g.drawImage(image.getScaledInstance(w, h, Image.SCALE_SMOOTH), x, y, null);
+
+        BufferedImage drawImage = getScaledImage(image, w, h);
+        g.drawImage(drawImage, x, y, null);
+    }
+
+    private static BufferedImage getScaledImage(BufferedImage source, int w, int h) {
+        if (source.getWidth() == w && source.getHeight() == h) {
+            return source;
+        }
+
+        String key = System.identityHashCode(source) + "_" + w + "x" + h;
+        BufferedImage cached = SCALED_CACHE.get(key);
+        if (cached != null) {
+            return cached;
+        }
+
+        BufferedImage scaled = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = scaled.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.drawImage(source, 0, 0, w, h, null);
+        g2.dispose();
+
+        SCALED_CACHE.put(key, scaled);
+        return scaled;
     }
 }

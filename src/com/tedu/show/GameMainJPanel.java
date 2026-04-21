@@ -16,6 +16,7 @@ import java.util.Map;
 import java.awt.Dimension;
 
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import com.tedu.element.ElementObj;
 import com.tedu.manager.ElementManager;
@@ -32,8 +33,8 @@ public class GameMainJPanel extends JPanel implements Runnable {
     }
 
     @Override
-    public void paint(Graphics g) {
-        super.paint(g);
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         Map<GameElement, List<ElementObj>> all = em.getGameElements();
         for (GameElement ge : GameElement.values()) {
             List<ElementObj> list = all.get(ge);
@@ -52,9 +53,12 @@ public class GameMainJPanel extends JPanel implements Runnable {
     @Override
     public void run() {
         while (true) {
-            this.repaint();
+            if (!isDisplayable()) {
+                return;
+            }
+            SwingUtilities.invokeLater(this::repaint);
             try {
-                Thread.sleep(16);
+                Thread.sleep(30);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 return;

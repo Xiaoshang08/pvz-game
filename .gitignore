@@ -1,0 +1,6 @@
+.idea/
+out/
+out_test/
+*.class
+.DS_Store
+Thumbs.db

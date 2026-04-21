@@ -10,6 +10,7 @@ import java.awt.RenderingHints;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.awt.image.BufferedImage;
 
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
@@ -31,30 +32,42 @@ public class GameBoard extends ElementObj {
     private static final int WINDOW_W = 1280;
     private static final int WINDOW_H = 720;
 
-    private static final int BOARD_X = 300;
-    private static final int BOARD_Y = 168;
-    private static final int BOARD_W = 920;
-    private static final int BOARD_H = 470;
+    private static final int BATTLE_BG_X = -115;
+    private static final int BATTLE_BG_Y = 104;
+    private static final int BATTLE_BG_W = 1450;
+    private static final int BATTLE_BG_H = 608;
 
-    private static final int STATUS_BAR_X = 40;
-    private static final int STATUS_BAR_Y = 50;
-    private static final int STATUS_BAR_W = 1180;
-    private static final int STATUS_BAR_H = 92;
+    private static final int BOARD_X = 0;
+    private static final int BOARD_Y = BATTLE_BG_Y;
+    private static final int BOARD_W = WINDOW_W;
+    private static final int BOARD_H = BATTLE_BG_H;
 
-    private static final int CARD_W = 160;
-    private static final int CARD_H = 38;
-    private static final int PEA_CARD_X = 170;
-    private static final int PEA_CARD_Y = 60;
-    private static final int SUNFLOWER_CARD_X = 345;
-    private static final int SUNFLOWER_CARD_Y = 60;
-    private static final int SHOVEL_BTN_X = 170;
-    private static final int SHOVEL_BTN_Y = 102;
-    private static final int SHOVEL_BTN_W = 160;
-    private static final int SHOVEL_BTN_H = 32;
-    private static final int MENU_BTN_X = 345;
-    private static final int MENU_BTN_Y = 102;
-    private static final int MENU_BTN_W = 160;
-    private static final int MENU_BTN_H = 32;
+    private static final int STATUS_BAR_X = 12;
+    private static final int STATUS_BAR_Y = 8;
+    private static final int STATUS_BAR_W = 1256;
+    private static final int STATUS_BAR_H = 70;
+
+    private static final int CARD_W = 150;
+    private static final int CARD_H = 42;
+    private static final int PEA_CARD_X = 126;
+    private static final int PEA_CARD_Y = 17;
+    private static final int SUNFLOWER_CARD_X = 288;
+    private static final int SUNFLOWER_CARD_Y = 17;
+    private static final int SHOVEL_BTN_X = 1130;
+    private static final int SHOVEL_BTN_Y = 652;
+    private static final int SHOVEL_BTN_W = 118;
+    private static final int SHOVEL_BTN_H = 42;
+    private static final int MENU_BTN_X = 1130;
+    private static final int MENU_BTN_Y = 16;
+    private static final int MENU_BTN_W = 118;
+    private static final int MENU_BTN_H = 42;
+
+    private static final int PREP_CAMERA_MAX = 190;
+
+    private static final double LAWN_X_RATIO = 0.1720;
+    private static final double LAWN_CENTER_Y_RATIO = 0.4950;
+    private static final double LAWN_W_RATIO = 0.6065;
+    private static final double LAWN_H_RATIO = 0.8200;
 
     private static final int HOME_BUTTON_W = 220;
     private static final int HOME_BUTTON_H = 58;
@@ -121,14 +134,17 @@ public class GameBoard extends ElementObj {
     private static final int ZOMBIE_SPAWN_INTERVAL = 150;
     private static final int START_PROTECT_TIME = 167;
 
+    private static final String BATTLE_SCENE_IMAGE_PATH = "images/map/lawn_scene.png";
+    private final BufferedImage battleSceneImage = GameImage.get(BATTLE_SCENE_IMAGE_PATH);
+
     private final int rows = 5;
     private final int cols = 9;
-    private final int cellW = 92;
-    private final int cellH = 82;
-    private final int gapX = 8;
-    private final int gapY = 8;
-    private final int lawnStartX = 320;
-    private final int lawnStartY = 186;
+    private final int cellW = (int) Math.round(BATTLE_BG_W * LAWN_W_RATIO / cols);
+    private final int cellH = (int) Math.round(BATTLE_BG_H * LAWN_H_RATIO / rows);
+    private final int gapX = 0;
+    private final int gapY = 0;
+    private final int lawnStartX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * LAWN_X_RATIO);
+    private final int lawnStartY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * LAWN_CENTER_Y_RATIO) - (cellH * rows) / 2;
 
     private final Plant[][] plantGrid = new Plant[rows][cols];
     private final Random random = new Random();
@@ -150,6 +166,7 @@ public class GameBoard extends ElementObj {
     private int prepCameraOffset = 0;
     private int introCameraOffset = 0;
     private boolean battleIntroPlaying = false;
+    private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
     private int unlockedLevel = 1;
     private int selectedLevel = 1;
@@ -203,18 +220,7 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(221, 232, 196));
         g.fillRect(0, 0, getW(), getH());
 
-        drawBattleEnvironment(g, getSceneCameraOffset(), true, battleIntroPlaying);
-
-        g.setColor(new Color(101, 138, 57));
-        g.setFont(new Font("SansSerif", Font.BOLD, 28));
-        g.drawString("Plants vs Zombies - Forest & Firewater Demo", 44, 36);
-
-        for (int row = 0; row < rows; row++) {
-            int y = getCellY(row) - 8;
-            g.setColor(new Color(72, 118, 40));
-            g.setFont(new Font("SansSerif", Font.PLAIN, 18));
-            g.drawString("L" + (row + 1), 20, y + cellH / 2 + 8);
-        }
+        drawBattleEnvironment(g, getSceneCameraOffset(), battleIntroPlaying);
     }
 
     private void drawHomeScene(Graphics2D g) {
@@ -332,44 +338,27 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(205, 232, 163));
         g.fillRect(0, 390, getW(), 330);
 
-        drawBattleEnvironment(g, prepCameraOffset, false, true);
+        drawBattleEnvironment(g, prepCameraOffset, true);
         drawPrepPanel(g);
     }
 
-    private void drawBattleEnvironment(Graphics2D g, int cameraOffset, boolean showLawnGridBg, boolean showPreviewZombies) {
+    private void drawBattleEnvironment(Graphics2D g, int cameraOffset, boolean showPreviewZombies) {
         int ox = -cameraOffset;
 
-        g.setColor(new Color(255, 248, 184));
-        g.fillOval(85 + ox, 42, 90, 90);
+        g.setColor(new Color(214, 228, 188));
+        g.fillRect(0, 0, getW(), getH());
 
-        g.setColor(new Color(148, 214, 95));
-        g.fillOval(-120 + ox, 410, 650, 260);
-        g.fillOval(380 + ox, 420, 980, 300);
-
-        drawHouse(g, 80 + ox, 242, 1.0);
-
-        g.setColor(new Color(124, 130, 124));
-        g.fillRoundRect(235 + ox, 420, 930, 70, 34, 34);
-        g.setColor(new Color(173, 180, 173));
-        g.fillRoundRect(265 + ox, 447, 880, 10, 10, 10);
-        g.fillRoundRect(265 + ox, 470, 880, 10, 10, 10);
-        for (int i = 0; i < 14; i++) {
-            int rx = 280 + ox + i * 62;
-            g.fillRoundRect(rx, 438, 24, 50, 8, 8);
-        }
-
-        g.setColor(new Color(215, 234, 179));
-        g.fillRoundRect(BOARD_X + ox, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
-        g.setColor(new Color(124, 181, 78));
-        g.fillRoundRect(BOARD_X + 22 + ox, BOARD_Y + 22, BOARD_W - 44, BOARD_H - 44, 24, 24);
-
-        if (showLawnGridBg) {
-            g.setColor(new Color(151, 196, 88, 55));
-            g.fillRoundRect(BOARD_X + 22 + ox, BOARD_Y + 22, BOARD_W - 44, BOARD_H - 44, 24, 24);
+        if (battleSceneImage != null) {
+            GameImage.draw(g, battleSceneImage, BATTLE_BG_X + ox, BATTLE_BG_Y, BATTLE_BG_W, BATTLE_BG_H);
+        } else {
+            g.setColor(new Color(215, 234, 179));
+            g.fillRoundRect(BOARD_X + ox, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
+            drawHouse(g, 80 + ox, 242, 1.0);
         }
 
         if (showPreviewZombies) {
-            drawZombiePreviewShowcase(g, ox);
+            int previewShift = stage == GameStage.PLAYING ? introZombieRetreatOffset : 0;
+            drawZombiePreviewShowcase(g, ox + previewShift);
         }
     }
 
@@ -402,7 +391,7 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.BOLD, 18));
         g.drawString("当前默认携带：豌豆射手、向日葵", 68, 520);
         g.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        g.drawString("镜头会先扫过门前道路，再进入布阵。", 72, 548);
+        g.drawString("先看看门前公路上的僵尸，再准备布阵。", 72, 548);
 
         drawButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
                 new Color(86, 164, 63), "开始战斗");
@@ -411,11 +400,11 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawZombiePreviewShowcase(Graphics2D g, int ox) {
-        int baseX = 980 + ox;
-        int baseY = 275;
+        int baseX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.905) + ox;
+        int baseY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.48);
         drawPreviewZombie(g, baseX, baseY, ZombiePreviewType.BASIC, "普通僵尸");
-        drawPreviewZombie(g, baseX + 88, baseY + 35, ZombiePreviewType.CONE, "路障僵尸");
-        drawPreviewZombie(g, baseX + 176, baseY - 10, ZombiePreviewType.BUCKET, "铁桶僵尸");
+        drawPreviewZombie(g, baseX + 82, baseY + 34, ZombiePreviewType.CONE, "路障僵尸");
+        drawPreviewZombie(g, baseX + 172, baseY - 8, ZombiePreviewType.BUCKET, "铁桶僵尸");
     }
 
     private void drawPreviewZombie(Graphics2D g, int x, int y, ZombiePreviewType type, String label) {
@@ -558,18 +547,20 @@ public class GameBoard extends ElementObj {
         }
 
         if (stage == GameStage.PREPARE) {
-            if (prepCameraOffset < 170) {
-                prepCameraOffset += 2;
+            if (prepCameraOffset < PREP_CAMERA_MAX) {
+                prepCameraOffset = Math.min(PREP_CAMERA_MAX, prepCameraOffset + 3);
             }
             return;
         }
 
         if (stage == GameStage.PLAYING && battleIntroPlaying) {
             if (introCameraOffset > 0) {
-                introCameraOffset = Math.max(0, introCameraOffset - 4);
+                introCameraOffset = Math.max(0, introCameraOffset - 5);
             }
+            introZombieRetreatOffset += 7;
             if (introCameraOffset == 0) {
                 battleIntroPlaying = false;
+                introZombieRetreatOffset = 0;
             }
             return;
         }
@@ -736,14 +727,13 @@ public class GameBoard extends ElementObj {
         if (plant != null && plant.isLive()) {
             plant.setLive(false);
             plantGrid[row][col] = null;
-            shovelMode = false;
         }
     }
 
     private void spawnZombie() {
         int row = random.nextInt(rows);
-        int x = getCellX(cols - 1) + cellW + 60;
-        int y = getCellY(row) + 10;
+        int x = BATTLE_BG_X + BATTLE_BG_W - 18;
+        int y = getCellY(row) + 12;
         ElementManager.getManager().addElement(new Zombie(row, x, y), GameElement.ZOMBIE);
         spawnedZombies++;
     }
@@ -766,6 +756,7 @@ public class GameBoard extends ElementObj {
         prepCameraOffset = 0;
         introCameraOffset = 0;
         battleIntroPlaying = false;
+        introZombieRetreatOffset = 0;
     }
 
     public void enterPrepareStage(int level) {
@@ -784,6 +775,7 @@ public class GameBoard extends ElementObj {
         prepCameraOffset = 0;
         introCameraOffset = 0;
         battleIntroPlaying = false;
+        introZombieRetreatOffset = 0;
         prepSelectedIndex = 0;
         selectedPlantType = PlantType.PEA_SHOOTER;
     }
@@ -804,8 +796,9 @@ public class GameBoard extends ElementObj {
         gameOver = false;
         gameWin = false;
         stage = GameStage.PLAYING;
-        introCameraOffset = 170;
+        introCameraOffset = PREP_CAMERA_MAX;
         battleIntroPlaying = true;
+        introZombieRetreatOffset = 0;
     }
 
     public void startGame() {
@@ -819,7 +812,6 @@ public class GameBoard extends ElementObj {
     public void pauseGame() {
         if (stage == GameStage.PLAYING && gameStarted && !gameOver && !gameWin) {
             paused = true;
-            shovelMode = false;
         }
     }
 
@@ -846,6 +838,7 @@ public class GameBoard extends ElementObj {
         prepCameraOffset = 0;
         introCameraOffset = 0;
         battleIntroPlaying = false;
+        introZombieRetreatOffset = 0;
     }
 
     public void triggerGameOver() {
@@ -864,6 +857,9 @@ public class GameBoard extends ElementObj {
         gameWin = true;
         paused = false;
         shovelMode = false;
+        if (unlockedLevel < 2) {
+            unlockedLevel = 2;
+        }
     }
 
     private void clearDynamicElements() {
@@ -1079,15 +1075,21 @@ public class GameBoard extends ElementObj {
 
 
     public int getLawnLeftEdgeX() {
-        return BOARD_X + 22;
+        return BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.105);
     }
 
     public int getHouseDoorTargetX() {
-        return 255;
+        return BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.080);
     }
 
     public int getHouseDoorTargetY(int row) {
-        int[] laneTargets = {350, 382, 414, 446, 478};
+        int[] laneTargets = {
+                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
+                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
+                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
+                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
+                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
+        };
         if (row < 0) {
             row = 0;
         } else if (row >= laneTargets.length) {
@@ -1136,6 +1138,10 @@ public class GameBoard extends ElementObj {
 
     public boolean isBattleIntroPlaying() {
         return battleIntroPlaying;
+    }
+
+    public boolean hasBackgroundSceneImage() {
+        return battleSceneImage != null;
     }
 
     private enum ZombiePreviewType {

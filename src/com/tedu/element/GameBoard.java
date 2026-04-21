@@ -62,6 +62,17 @@ public class GameBoard extends ElementObj {
     private static final int HOME_START_BTN_Y = 285;
     private static final int HOME_EXIT_BTN_Y = 360;
 
+    private static final int LEVEL_CARD_W = 220;
+    private static final int LEVEL_CARD_H = 280;
+    private static final int LEVEL_CARD_Y = 220;
+    private static final int LEVEL1_X = 220;
+    private static final int LEVEL2_X = 530;
+    private static final int LEVEL3_X = 840;
+    private static final int LEVEL_SELECT_BACK_X = 520;
+    private static final int LEVEL_SELECT_BACK_Y = 600;
+    private static final int LEVEL_SELECT_BACK_W = 240;
+    private static final int LEVEL_SELECT_BACK_H = 54;
+
     private static final int PAUSE_CONTINUE_BTN_X = 520;
     private static final int PAUSE_CONTINUE_BTN_Y = 250;
     private static final int PAUSE_CONTINUE_BTN_W = 240;
@@ -140,6 +151,8 @@ public class GameBoard extends ElementObj {
     private int introCameraOffset = 0;
     private boolean battleIntroPlaying = false;
     private int prepSelectedIndex = 0;
+    private int unlockedLevel = 1;
+    private int selectedLevel = 1;
 
     public GameBoard() {
         instance = this;
@@ -160,6 +173,7 @@ public class GameBoard extends ElementObj {
 
     public enum GameStage {
         HOME,
+        LEVEL_SELECT,
         PREPARE,
         PLAYING
     }
@@ -171,6 +185,10 @@ public class GameBoard extends ElementObj {
 
         if (stage == GameStage.HOME) {
             drawHomeScene(g2);
+            return;
+        }
+        if (stage == GameStage.LEVEL_SELECT) {
+            drawLevelSelectScene(g2);
             return;
         }
         if (stage == GameStage.PREPARE) {
@@ -235,6 +253,77 @@ public class GameBoard extends ElementObj {
                 new Color(83, 160, 56), "开始游戏");
         drawButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
                 new Color(118, 118, 118), "退出游戏");
+    }
+
+    private void drawLevelSelectScene(Graphics2D g) {
+        g.setColor(new Color(168, 219, 247));
+        g.fillRect(0, 0, getW(), 410);
+        g.setColor(new Color(196, 227, 145));
+        g.fillRect(0, 410, getW(), 310);
+
+        g.setColor(new Color(255, 244, 170));
+        g.fillOval(80, 55, 120, 120);
+        g.setColor(new Color(140, 208, 92));
+        g.fillOval(-60, 390, 620, 250);
+        g.fillOval(320, 430, 980, 290);
+
+        g.setColor(new Color(255, 255, 255, 228));
+        g.setFont(new Font("Serif", Font.BOLD, 42));
+        g.drawString("选择关卡", 520, 120);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 22));
+        g.drawString("先从第一关出发吧，后面的关卡以后再慢慢开放。", 355, 165);
+
+        drawLevelCard(g, LEVEL1_X, LEVEL_CARD_Y, 1, true, "门前草坪", "当前可挑战");
+        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "林间小路", "暂未解锁");
+        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "夜色庭院", "暂未解锁");
+
+        drawButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
+                new Color(112, 112, 112), "返回首页");
+    }
+
+    private void drawLevelCard(Graphics2D g, int x, int y, int level, boolean unlocked, String title, String desc) {
+        Color outer = unlocked ? new Color(112, 76, 34) : new Color(95, 95, 95);
+        Color inner = unlocked ? new Color(187, 141, 82) : new Color(146, 146, 146);
+        g.setColor(outer);
+        g.fillRoundRect(x, y, LEVEL_CARD_W, LEVEL_CARD_H, 28, 28);
+        g.setColor(inner);
+        g.fillRoundRect(x + 12, y + 12, LEVEL_CARD_W - 24, LEVEL_CARD_H - 24, 22, 22);
+
+        g.setColor(unlocked ? new Color(224, 238, 180) : new Color(175, 175, 175));
+        g.fillRoundRect(x + 28, y + 56, LEVEL_CARD_W - 56, 120, 18, 18);
+        g.setColor(unlocked ? new Color(124, 181, 78) : new Color(120, 120, 120));
+        g.fillRoundRect(x + 40, y + 68, LEVEL_CARD_W - 80, 96, 14, 14);
+
+        g.setColor(new Color(255, 248, 220));
+        g.setFont(new Font("SansSerif", Font.BOLD, 26));
+        g.drawString("第" + level + "关", x + 68, y + 42);
+        g.setFont(new Font("SansSerif", Font.BOLD, 22));
+        g.drawString(title, x + 54, y + 215);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        g.drawString(desc, x + 64, y + 246);
+
+        if (!unlocked) {
+            g.setColor(new Color(0, 0, 0, 88));
+            g.fillRoundRect(x + 12, y + 12, LEVEL_CARD_W - 24, LEVEL_CARD_H - 24, 22, 22);
+            drawLockIcon(g, x + LEVEL_CARD_W / 2 - 26, y + 95);
+        } else {
+            g.setColor(new Color(255, 249, 210));
+            g.fillRoundRect(x + 58, y + 95, 104, 34, 16, 16);
+            g.setColor(new Color(87, 118, 44));
+            g.setFont(new Font("SansSerif", Font.BOLD, 18));
+            g.drawString("可进入", x + 84, y + 118);
+        }
+    }
+
+    private void drawLockIcon(Graphics2D g, int x, int y) {
+        g.setStroke(new BasicStroke(6f));
+        g.setColor(new Color(245, 245, 245));
+        g.drawArc(x + 6, y - 18, 40, 34, 0, 180);
+        g.setColor(new Color(230, 230, 230));
+        g.fillRoundRect(x, y, 52, 42, 12, 12);
+        g.setColor(new Color(120, 120, 120));
+        g.drawRoundRect(x, y, 52, 42, 12, 12);
+        g.fillOval(x + 21, y + 13, 10, 10);
     }
 
     private void drawPrepareScene(Graphics2D g) {
@@ -464,6 +553,10 @@ public class GameBoard extends ElementObj {
 
     @Override
     protected void add(long gameTime) {
+        if (stage == GameStage.LEVEL_SELECT) {
+            return;
+        }
+
         if (stage == GameStage.PREPARE) {
             if (prepCameraOffset < 170) {
                 prepCameraOffset += 2;
@@ -507,11 +600,23 @@ public class GameBoard extends ElementObj {
     public void mouseClick(int mouseX, int mouseY) {
         if (stage == GameStage.HOME) {
             if (isInHomeStartButton(mouseX, mouseY)) {
-                enterPrepareStage();
+                enterLevelSelectStage();
                 return;
             }
             if (isInHomeExitButton(mouseX, mouseY)) {
                 System.exit(0);
+            }
+            return;
+        }
+
+        if (stage == GameStage.LEVEL_SELECT) {
+            if (isInLevelSelectBackButton(mouseX, mouseY)) {
+                returnToHome();
+                return;
+            }
+            if (isInLevel1Button(mouseX, mouseY)) {
+                enterPrepareStage(1);
+                return;
             }
             return;
         }
@@ -650,6 +755,24 @@ public class GameBoard extends ElementObj {
         ElementManager.getManager().addElement(Sun.createFallingSun(x, STATUS_BAR_Y + STATUS_BAR_H + 8, targetY, SKY_SUN_VALUE), GameElement.SUN);
     }
 
+    public void enterLevelSelectStage() {
+        clearDynamicElements();
+        clearPlantGrid();
+        stage = GameStage.LEVEL_SELECT;
+        gameStarted = false;
+        gameOver = false;
+        gameWin = false;
+        paused = false;
+        prepCameraOffset = 0;
+        introCameraOffset = 0;
+        battleIntroPlaying = false;
+    }
+
+    public void enterPrepareStage(int level) {
+        selectedLevel = level;
+        enterPrepareStage();
+    }
+
     public void enterPrepareStage() {
         clearDynamicElements();
         clearPlantGrid();
@@ -686,7 +809,7 @@ public class GameBoard extends ElementObj {
     }
 
     public void startGame() {
-        enterPrepareStage();
+        enterLevelSelectStage();
     }
 
     public void restartGame() {
@@ -765,6 +888,14 @@ public class GameBoard extends ElementObj {
 
     public boolean isInHomeExitButton(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H);
+    }
+
+    public boolean isInLevel1Button(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, LEVEL1_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
+    }
+
+    public boolean isInLevelSelectBackButton(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H);
     }
 
     public boolean isInPauseContinueButton(int mouseX, int mouseY) {

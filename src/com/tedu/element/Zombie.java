@@ -85,7 +85,7 @@ public class Zombie extends ElementObj {
             moveCounter = 0;
 
             GameBoard board = GameBoard.getInstance();
-            if (board != null && getX() <= board.getLawnLeftEdgeX()) {
+            if (board != null && !board.isContraMode() && getX() <= board.getLawnLeftEdgeX()) {
                 enteringHouse = true;
                 attackTarget = null;
             }

@@ -39,10 +39,15 @@ public class GameJFrame extends JFrame {
     public void start() {
         if (jPanel != null) {
             jPanel.setPreferredSize(new Dimension(GameX, GameY));
+            jPanel.setFocusable(true);
+            jPanel.setFocusTraversalKeysEnabled(false);
             this.setContentPane(jPanel);
         }
         if (keyListener != null) {
             this.addKeyListener(keyListener);
+            if (jPanel != null) {
+                jPanel.addKeyListener(keyListener);
+            }
         }
         if (mouseListener != null && jPanel != null) {
             jPanel.addMouseListener(mouseListener);
@@ -54,6 +59,9 @@ public class GameJFrame extends JFrame {
         this.pack();
         this.setLocationRelativeTo(null);
         this.setVisible(true);
+        if (jPanel != null) {
+            jPanel.requestFocusInWindow();
+        }
 
         if (thead != null) {
             thead.start();

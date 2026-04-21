@@ -9,8 +9,10 @@ public enum GameElement {
     BACKGROUND,
     GRID,
     PLANT,
+    PLAYER,
     ZOMBIE,
     BULLET,
+    ENEMY_BULLET,
     SUN,
     UI,
     EFFECT;

@@ -7,6 +7,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -135,7 +136,15 @@ public class GameBoard extends ElementObj {
     private static final int START_PROTECT_TIME = 167;
 
     private static final String BATTLE_SCENE_IMAGE_PATH = "images/map/lawn_scene.png";
+    private static final String CONTRA_STAGE_IMAGE_PATH = "images/map/contra_stage.png";
+    private static final int CONTRA_SCALE = 3;
+    private static final int CONTRA_MAP_W = 3328 * CONTRA_SCALE;
+    private static final int CONTRA_MAP_H = 224 * CONTRA_SCALE;
+    private static final int CONTRA_MAP_Y = 48;
+    private static final int CONTRA_GROUND_Y = 620;
+    private static final int CONTRA_TOP_Y = 120;
     private final BufferedImage battleSceneImage = GameImage.get(BATTLE_SCENE_IMAGE_PATH);
+    private final BufferedImage contraStageImage = GameImage.get(CONTRA_STAGE_IMAGE_PATH);
 
     private final int rows = 5;
     private final int cols = 9;
@@ -170,6 +179,8 @@ public class GameBoard extends ElementObj {
     private int prepSelectedIndex = 0;
     private int unlockedLevel = 1;
     private int selectedLevel = 1;
+    private ContraPlayer contraPlayer;
+    private int contraCameraX = 0;
 
     public GameBoard() {
         instance = this;
@@ -217,10 +228,37 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawBattleScene(Graphics2D g) {
+        if (isContraMode()) {
+            drawContraScene(g);
+            return;
+        }
+
         g.setColor(new Color(221, 232, 196));
         g.fillRect(0, 0, getW(), getH());
-
         drawBattleEnvironment(g, getSceneCameraOffset(), battleIntroPlaying);
+    }
+
+    private void drawContraScene(Graphics2D g) {
+        g.setColor(new Color(6, 8, 16));
+        g.fillRect(0, 0, getW(), getH());
+
+        int camera = getContraCameraX();
+        if (contraStageImage != null) {
+            GameImage.draw(g, contraStageImage, -camera, CONTRA_MAP_Y, CONTRA_MAP_W, CONTRA_MAP_H);
+        } else {
+            g.setColor(new Color(15, 16, 28));
+            g.fillRect(0, 0, getW(), getH());
+            g.setColor(new Color(30, 92, 40));
+            g.fillRect(0, CONTRA_GROUND_Y, getW(), 92);
+        }
+
+        g.setColor(new Color(0, 0, 0, 88));
+        g.fillRect(0, 0, getW(), 84);
+        g.setColor(new Color(226, 241, 196));
+        g.setFont(new Font("SansSerif", Font.BOLD, 23));
+        g.drawString("Level 3: Contra Peashooter", 34, 36);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        g.drawString("Move: WASD / Arrow keys    Shoot: Space    Pause: P or Esc", 34, 62);
     }
 
     private void drawHomeScene(Graphics2D g) {
@@ -283,6 +321,7 @@ public class GameBoard extends ElementObj {
         drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "林间小路", "暂未解锁");
         drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "夜色庭院", "暂未解锁");
 
+        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "Contra PVZ", "WASD + Space");
         drawButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
                 new Color(112, 112, 112), "返回首页");
     }
@@ -569,7 +608,12 @@ public class GameBoard extends ElementObj {
             return;
         }
 
-        if (spawnedZombies < MAX_ZOMBIES) {
+        if (isContraMode()) {
+            updateContraMode(gameTime);
+            return;
+        }
+
+        if (spawnedZombies < getMaxZombies()) {
             startProtectCounter++;
             if (startProtectCounter >= START_PROTECT_TIME) {
                 zombieSpawnCounter++;
@@ -587,6 +631,20 @@ public class GameBoard extends ElementObj {
         }
     }
 
+
+    private void updateContraMode(long gameTime) {
+        if (contraPlayer != null && contraPlayer.isLive()) {
+            updateContraCameraFor(contraPlayer.getX());
+        }
+
+        if (spawnedZombies < getMaxZombies()) {
+            zombieSpawnCounter++;
+            if (zombieSpawnCounter >= 58) {
+                zombieSpawnCounter = 0;
+                spawnGunZombie();
+            }
+        }
+    }
     @Override
     public void mouseClick(int mouseX, int mouseY) {
         if (stage == GameStage.HOME) {
@@ -607,6 +665,11 @@ public class GameBoard extends ElementObj {
             }
             if (isInLevel1Button(mouseX, mouseY)) {
                 enterPrepareStage(1);
+                return;
+            }
+            if (isInLevel3Button(mouseX, mouseY)) {
+                selectedLevel = 3;
+                startBattle();
                 return;
             }
             return;
@@ -667,6 +730,10 @@ public class GameBoard extends ElementObj {
             return;
         }
 
+        if (isContraMode()) {
+            return;
+        }
+
         if (isInStatusBar(mouseX, mouseY)) {
             return;
         }
@@ -679,7 +746,7 @@ public class GameBoard extends ElementObj {
     }
 
     public void tryPlantAt(int mouseX, int mouseY) {
-        if (!isPlaying()) {
+        if (!isPlaying() || isContraMode()) {
             return;
         }
 
@@ -713,7 +780,7 @@ public class GameBoard extends ElementObj {
     }
 
     public void tryRemovePlantAt(int mouseX, int mouseY) {
-        if (!isPlaying()) {
+        if (!isPlaying() || isContraMode()) {
             return;
         }
 
@@ -732,12 +799,20 @@ public class GameBoard extends ElementObj {
 
     private void spawnZombie() {
         int row = random.nextInt(rows);
-        int x = BATTLE_BG_X + BATTLE_BG_W - 18;
+        int x = isContraMode() ? getW() + 20 + random.nextInt(160) : BATTLE_BG_X + BATTLE_BG_W - 18;
         int y = getCellY(row) + 12;
         ElementManager.getManager().addElement(new Zombie(row, x, y), GameElement.ZOMBIE);
         spawnedZombies++;
     }
 
+
+    private void spawnGunZombie() {
+        int[] lanes = {CONTRA_GROUND_Y - 82, CONTRA_GROUND_Y - 170, CONTRA_GROUND_Y - 260};
+        int laneIndex = random.nextInt(lanes.length);
+        int spawnX = Math.min(CONTRA_MAP_W - 180, getContraCameraX() + getW() + 120 + random.nextInt(220));
+        ElementManager.getManager().addElement(new GunZombie(spawnX, lanes[laneIndex]), GameElement.ZOMBIE);
+        spawnedZombies++;
+    }
     private void spawnSkySun() {
         int col = random.nextInt(cols);
         int x = getCellX(col) + (cellW - 36) / 2;
@@ -796,8 +871,17 @@ public class GameBoard extends ElementObj {
         gameOver = false;
         gameWin = false;
         stage = GameStage.PLAYING;
-        introCameraOffset = PREP_CAMERA_MAX;
-        battleIntroPlaying = true;
+        if (isContraMode()) {
+            currentSun = 0;
+            contraCameraX = 0;
+            introCameraOffset = 0;
+            battleIntroPlaying = false;
+            contraPlayer = new ContraPlayer(110, CONTRA_GROUND_Y - 76);
+            ElementManager.getManager().addElement(contraPlayer, GameElement.PLAYER);
+        } else {
+            introCameraOffset = PREP_CAMERA_MAX;
+            battleIntroPlaying = true;
+        }
         introZombieRetreatOffset = 0;
     }
 
@@ -839,6 +923,7 @@ public class GameBoard extends ElementObj {
         introCameraOffset = 0;
         battleIntroPlaying = false;
         introZombieRetreatOffset = 0;
+        contraCameraX = 0;
     }
 
     public void triggerGameOver() {
@@ -860,14 +945,21 @@ public class GameBoard extends ElementObj {
         if (unlockedLevel < 2) {
             unlockedLevel = 2;
         }
+        if (selectedLevel == 3 && unlockedLevel < 3) {
+            unlockedLevel = 3;
+        }
     }
 
     private void clearDynamicElements() {
         ElementManager em = ElementManager.getManager();
         em.getElementsByKey(GameElement.PLANT).clear();
+        em.getElementsByKey(GameElement.PLAYER).clear();
         em.getElementsByKey(GameElement.ZOMBIE).clear();
         em.getElementsByKey(GameElement.BULLET).clear();
+        em.getElementsByKey(GameElement.ENEMY_BULLET).clear();
         em.getElementsByKey(GameElement.SUN).clear();
+        contraPlayer = null;
+        contraCameraX = 0;
     }
 
     private void clearPlantGrid() {
@@ -888,6 +980,10 @@ public class GameBoard extends ElementObj {
 
     public boolean isInLevel1Button(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, LEVEL1_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
+    }
+
+    public boolean isInLevel3Button(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, LEVEL3_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
     }
 
     public boolean isInLevelSelectBackButton(int mouseX, int mouseY) {
@@ -979,6 +1075,20 @@ public class GameBoard extends ElementObj {
         return stage == GameStage.PLAYING && gameStarted && !gameOver && !gameWin && !paused && !battleIntroPlaying;
     }
 
+    @Override
+    public void keyClick(boolean pressed, int key) {
+        if (!pressed) {
+            return;
+        }
+        if (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P) {
+            if (paused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        }
+    }
+
     public boolean isGameStarted() { return gameStarted; }
     public boolean isGameOver() { return gameOver; }
     public boolean isGameWin() { return gameWin; }
@@ -986,7 +1096,7 @@ public class GameBoard extends ElementObj {
     public boolean isPaused() { return paused; }
     public boolean isInBattleStage() { return stage == GameStage.PLAYING; }
     public int getSpawnedZombies() { return spawnedZombies; }
-    public int getMaxZombies() { return MAX_ZOMBIES; }
+    public int getMaxZombies() { return selectedLevel == 3 ? 14 : MAX_ZOMBIES; }
     public int getCurrentSun() { return currentSun; }
     public int getPeaShooterCost() { return PEA_SHOOTER_COST; }
     public int getSunflowerCost() { return SUNFLOWER_COST; }
@@ -1123,6 +1233,9 @@ public class GameBoard extends ElementObj {
 
 
     public int getSceneCameraOffset() {
+        if (isContraMode()) {
+            return contraCameraX;
+        }
         if (stage == GameStage.PREPARE) {
             return prepCameraOffset;
         }
@@ -1136,12 +1249,45 @@ public class GameBoard extends ElementObj {
         return worldX - getSceneCameraOffset();
     }
 
+    public void updateContraCameraFor(int playerWorldX) {
+        int target = playerWorldX - getW() / 3;
+        contraCameraX = Math.max(0, Math.min(CONTRA_MAP_W - getW(), target));
+    }
+
+    public int getContraCameraX() {
+        return contraCameraX;
+    }
+
+    public int getContraWorldWidth() {
+        return CONTRA_MAP_W;
+    }
+
+    public int getContraGroundY() {
+        return CONTRA_GROUND_Y;
+    }
+
+    public int getContraTopBoundY() {
+        return CONTRA_TOP_Y;
+    }
+
     public boolean isBattleIntroPlaying() {
         return battleIntroPlaying;
     }
 
     public boolean hasBackgroundSceneImage() {
         return battleSceneImage != null;
+    }
+
+    public boolean isContraMode() {
+        return stage == GameStage.PLAYING && selectedLevel == 3;
+    }
+
+    public ContraPlayer getContraPlayer() {
+        return contraPlayer;
+    }
+
+    public int getContraPlayerHealth() {
+        return contraPlayer == null ? 0 : contraPlayer.getHealth();
     }
 
     private enum ZombiePreviewType {

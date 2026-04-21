@@ -19,6 +19,7 @@ public class GameStart {
 
         frame.setjPanel(panel);
         frame.setMouseListener(listener);
+        frame.setKeyListener(listener);
         frame.setThead(thread);
         frame.start();
     }

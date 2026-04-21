@@ -14,7 +14,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.tedu.element.Bullet;
+import com.tedu.element.ContraPeaBullet;
+import com.tedu.element.ContraPlayer;
 import com.tedu.element.ElementObj;
+import com.tedu.element.EnemyBullet;
+import com.tedu.element.GunZombie;
 import com.tedu.element.GameBoard;
 import com.tedu.element.Plant;
 import com.tedu.element.Zombie;
@@ -79,6 +83,11 @@ public class GameThread extends Thread {
             return;
         }
 
+        if (board.isContraMode()) {
+            handleContraCollisions(board);
+            return;
+        }
+
         List<ElementObj> bullets = em.getElementsByKey(GameElement.BULLET);
         List<ElementObj> zombies = em.getElementsByKey(GameElement.ZOMBIE);
         List<ElementObj> plants = em.getElementsByKey(GameElement.PLANT);
@@ -127,6 +136,57 @@ public class GameThread extends Thread {
         }
     }
 
+    private void handleContraCollisions(GameBoard board) {
+        List<ElementObj> bullets = em.getElementsByKey(GameElement.BULLET);
+        List<ElementObj> enemyBullets = em.getElementsByKey(GameElement.ENEMY_BULLET);
+        List<ElementObj> zombies = em.getElementsByKey(GameElement.ZOMBIE);
+        ContraPlayer player = board.getContraPlayer();
+
+        for (ElementObj bulletObj : bullets) {
+            if (!bulletObj.isLive() || !(bulletObj instanceof ContraPeaBullet)) {
+                continue;
+            }
+            ContraPeaBullet bullet = (ContraPeaBullet) bulletObj;
+            for (ElementObj zombieObj : zombies) {
+                if (!zombieObj.isLive() || !(zombieObj instanceof GunZombie)) {
+                    continue;
+                }
+                GunZombie zombie = (GunZombie) zombieObj;
+                if (bullet.pk(zombie)) {
+                    zombie.takeDamage(bullet.getDamage());
+                    bullet.setLive(false);
+                    break;
+                }
+            }
+        }
+
+        if (player == null || !player.isLive()) {
+            return;
+        }
+
+        for (ElementObj bulletObj : enemyBullets) {
+            if (!bulletObj.isLive() || !(bulletObj instanceof EnemyBullet)) {
+                continue;
+            }
+            EnemyBullet bullet = (EnemyBullet) bulletObj;
+            if (bullet.pk(player)) {
+                player.takeDamage(bullet.getDamage());
+                bullet.setLive(false);
+            }
+        }
+
+        for (ElementObj zombieObj : zombies) {
+            if (!zombieObj.isLive() || !(zombieObj instanceof GunZombie)) {
+                continue;
+            }
+            GunZombie zombie = (GunZombie) zombieObj;
+            if (zombie.pk(player)) {
+                player.takeDamage(2);
+                zombie.setLive(false);
+            }
+        }
+    }
+
     private void cleanupDead(Map<GameElement, List<ElementObj>> all) {
         for (GameElement ge : GameElement.values()) {
             List<ElementObj> list = all.get(ge);
@@ -149,7 +209,7 @@ public class GameThread extends Thread {
 
     private void checkGameOver() {
         GameBoard board = GameBoard.getInstance();
-        if (board == null || !board.isPlaying()) {
+        if (board == null || !board.isPlaying() || board.isContraMode()) {
             return;
         }
 

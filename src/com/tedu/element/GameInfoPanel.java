@@ -22,6 +22,11 @@ public class GameInfoPanel extends ElementObj {
             return;
         }
 
+        if (board.isContraMode()) {
+            drawContraInfo(g, board);
+            return;
+        }
+
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -61,6 +66,29 @@ public class GameInfoPanel extends ElementObj {
         g2.drawString("当前模式：" + getModeLabel(board), x + 490, y + 50);
         g2.drawString("当前植物：" + getSelectedPlantLabel(board), x + 760, y + 27);
         g2.drawString("僵尸波次：" + board.getSpawnedZombies() + " / " + board.getMaxZombies(), x + 760, y + 50);
+    }
+
+    private void drawContraInfo(Graphics g, GameBoard board) {
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        int x = board.getStatusBarX();
+        int y = board.getStatusBarY();
+        int w = board.getStatusBarW();
+        int h = board.getStatusBarH();
+        g2.setColor(new Color(31, 48, 42, 220));
+        g2.fillRoundRect(x, y, w, h, 18, 18);
+        g2.setColor(new Color(150, 226, 117));
+        g2.drawRoundRect(x, y, w, h, 18, 18);
+
+        g2.setFont(new Font("SansSerif", Font.BOLD, 22));
+        g2.drawString("Contra PVZ", x + 24, y + 31);
+        g2.setFont(new Font("SansSerif", Font.BOLD, 16));
+        g2.drawString("HP: " + board.getContraPlayerHealth(), x + 220, y + 29);
+        g2.drawString("Kills: " + board.getTotalKills() + " / " + board.getMaxZombies(), x + 340, y + 29);
+        g2.drawString("WASD/Arrow move    Space shoot    P/Esc pause", x + 520, y + 29);
+        g2.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        g2.drawString("Peashooter can move freely. Zombies hurt you on contact or if they slip past.", x + 24, y + 56);
     }
 
     private String getSelectedPlantLabel(GameBoard board) {

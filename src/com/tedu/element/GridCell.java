@@ -26,7 +26,7 @@ public class GridCell extends ElementObj {
     @Override
     public void showElement(Graphics g) {
         GameBoard board = GameBoard.getInstance();
-        if (board == null || !board.isInBattleStage()) {
+        if (board == null || !board.isInBattleStage() || board.isContraMode()) {
             return;
         }
 

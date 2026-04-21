@@ -44,19 +44,19 @@ public final class GameImage {
 
         String[] candidates = new String[] {
                 normalized,
-                "src/" + normalized,
                 "assets/" + normalized,
+                "src/" + normalized,
                 "src/assets/" + normalized,
                 "src/com/tedu/" + normalized,
                 "com/tedu/" + normalized
         };
 
-        for (String candidate : candidates) {
-            File file = new File(candidate);
-            if (file.exists() && file.isFile()) {
-                try {
-                    return ImageIO.read(file);
-                } catch (IOException ignored) {
+        File base = new File(System.getProperty("user.dir"));
+        for (int i = 0; base != null && i < 8; i++, base = base.getParentFile()) {
+            for (String candidate : candidates) {
+                BufferedImage image = readIfExists(new File(base, candidate));
+                if (image != null) {
+                    return image;
                 }
             }
         }
@@ -69,6 +69,16 @@ public final class GameImage {
                     return ImageIO.read(url);
                 } catch (IOException ignored) {
                 }
+            }
+        }
+        return null;
+    }
+
+    private static BufferedImage readIfExists(File file) {
+        if (file.exists() && file.isFile()) {
+            try {
+                return ImageIO.read(file);
+            } catch (IOException ignored) {
             }
         }
         return null;

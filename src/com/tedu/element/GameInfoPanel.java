@@ -30,21 +30,21 @@ public class GameInfoPanel extends ElementObj {
         int w = board.getStatusBarW();
         int h = board.getStatusBarH();
 
-        g2.setColor(new Color(255, 248, 220));
-        g2.fillRoundRect(x, y, w, h, 18, 18);
-        g2.setColor(new Color(144, 108, 50));
-        g2.drawRoundRect(x, y, w, h, 18, 18);
+        g2.setColor(new Color(248, 236, 195));
+        g2.fillRoundRect(x, y, w, h, 22, 22);
+        g2.setColor(new Color(154, 119, 60));
+        g2.drawRoundRect(x, y, w, h, 22, 22);
 
         g2.setColor(new Color(255, 210, 66));
-        g2.fillOval(x + 18, y + 18, 30, 30);
+        g2.fillOval(x + 18, y + 14, 30, 30);
         g2.setColor(new Color(230, 160, 30));
-        g2.drawOval(x + 18, y + 18, 30, 30);
+        g2.drawOval(x + 18, y + 14, 30, 30);
 
         g2.setColor(new Color(92, 66, 24));
         g2.setFont(new Font("SansSerif", Font.BOLD, 22));
-        g2.drawString(String.valueOf(board.getCurrentSun()), x + 60, y + 42);
+        g2.drawString(String.valueOf(board.getCurrentSun()), x + 58, y + 38);
         g2.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        g2.drawString("阳光", x + 62, y + 66);
+        g2.drawString("阳光", x + 60, y + 57);
 
         drawPlantCard(g2, board, board.getPeaCardX(), board.getPeaCardY(),
                 "豌豆射手", board.getPeaShooterCost(),
@@ -56,11 +56,11 @@ public class GameInfoPanel extends ElementObj {
         drawMenuButton(g2, board);
 
         g2.setColor(new Color(96, 66, 24));
-        g2.setFont(new Font("SansSerif", Font.BOLD, 16));
-        g2.drawString("击败数：" + board.getTotalKills() + " / " + board.getMaxZombies(), x + 560, y + 34);
-        g2.drawString("当前模式：" + getModeLabel(board), x + 560, y + 62);
-        g2.drawString("当前植物：" + getSelectedPlantLabel(board), x + 840, y + 34);
-        g2.drawString("僵尸波次：" + board.getSpawnedZombies() + " / " + board.getMaxZombies(), x + 840, y + 62);
+        g2.setFont(new Font("SansSerif", Font.BOLD, 15));
+        g2.drawString("击败数：" + board.getTotalKills() + " / " + board.getMaxZombies(), x + 490, y + 27);
+        g2.drawString("当前模式：" + getModeLabel(board), x + 490, y + 50);
+        g2.drawString("当前植物：" + getSelectedPlantLabel(board), x + 760, y + 27);
+        g2.drawString("僵尸波次：" + board.getSpawnedZombies() + " / " + board.getMaxZombies(), x + 760, y + 50);
     }
 
     private String getSelectedPlantLabel(GameBoard board) {
@@ -79,15 +79,15 @@ public class GameInfoPanel extends ElementObj {
 
     private void drawPlantCard(Graphics2D g, GameBoard board, int x, int y, String name, int cost, boolean selected) {
         g.setColor(selected ? new Color(97, 171, 96) : new Color(196, 221, 154));
-        g.fillRoundRect(x, y, board.getPlantCardW(), board.getPlantCardH(), 16, 16);
+        g.fillRoundRect(x, y, board.getPlantCardW(), board.getPlantCardH(), 14, 14);
         g.setColor(selected ? Color.WHITE : new Color(120, 120, 120));
-        g.drawRoundRect(x, y, board.getPlantCardW(), board.getPlantCardH(), 16, 16);
+        g.drawRoundRect(x, y, board.getPlantCardW(), board.getPlantCardH(), 14, 14);
 
         g.setColor(new Color(92, 66, 24));
         g.setFont(new Font("SansSerif", Font.BOLD, 14));
-        g.drawString(name, x + 14, y + 17);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        g.drawString(cost + " 阳光", x + 14, y + 32);
+        g.drawString(name, x + 12, y + 17);
+        g.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        g.drawString(cost + " 阳光", x + 12, y + 33);
     }
 
     private void drawShovelButton(Graphics2D g, GameBoard board) {
@@ -101,8 +101,8 @@ public class GameInfoPanel extends ElementObj {
         g.fillRoundRect(x, y, w, h, 16, 16);
         g.setColor(Color.WHITE);
         g.drawRoundRect(x, y, w, h, 16, 16);
-        g.setFont(new Font("SansSerif", Font.BOLD, 14));
-        g.drawString(board.isShovelMode() ? "铲子模式: ON" : "铲子", x + 42, y + 21);
+        g.setFont(new Font("SansSerif", Font.BOLD, 16));
+        g.drawString(board.isShovelMode() ? "铲子 ON" : "铲子", x + 24, y + 27);
     }
 
     private void drawMenuButton(Graphics2D g, GameBoard board) {
@@ -115,8 +115,8 @@ public class GameInfoPanel extends ElementObj {
         g.fillRoundRect(x, y, w, h, 16, 16);
         g.setColor(Color.WHITE);
         g.drawRoundRect(x, y, w, h, 16, 16);
-        g.setFont(new Font("SansSerif", Font.BOLD, 14));
-        g.drawString("菜单  ≡", x + 48, y + 21);
+        g.setFont(new Font("SansSerif", Font.BOLD, 16));
+        g.drawString("菜单 ≡", x + 22, y + 27);
     }
 
     @Override

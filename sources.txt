@@ -1,6 +1,10 @@
 com/tedu/controller/GameListener.java
 com/tedu/controller/GameThread.java
 com/tedu/element/Bullet.java
+com/tedu/element/ContraPeaBullet.java
+com/tedu/element/ContraPlayer.java
+com/tedu/element/EnemyBullet.java
+com/tedu/element/GunZombie.java
 com/tedu/element/ElementObj.java
 com/tedu/element/GameBoard.java
 com/tedu/element/GameInfoPanel.java

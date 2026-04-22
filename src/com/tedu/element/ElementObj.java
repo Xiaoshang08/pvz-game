@@ -23,7 +23,6 @@ public abstract class ElementObj {
     private int h;
     private ImageIcon icon;
     private boolean live = true;
-    private boolean movable = true;
 
     // level2新增属性：
 

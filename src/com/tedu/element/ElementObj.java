@@ -296,8 +296,8 @@ public abstract class ElementObj {
         int terrainTop = terrain.getY();
         if (Math.abs(footY - terrainTop) > 5)
             return false;
-        return this.getX() + this.getW() > terrain.getX() &&
-                this.getX() < terrain.getX() + terrain.getW();
+        return this.getX() + this.getW() - 16 > terrain.getX() &&
+                this.getX() + 16 < terrain.getX() + terrain.getW();
     }
 
     public ElementObj createElement(String str) {
@@ -346,10 +346,6 @@ public abstract class ElementObj {
 
     public void setRoleType(String roleType) {
         this.roleType = roleType;
-    }
-
-    public void setMovable(boolean movable) {
-        this.movable = movable;
     }
 
     public void setRequiredDiamondCount(int requiredDiamondCount) {

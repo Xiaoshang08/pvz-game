@@ -180,6 +180,9 @@ public class ContraPlayer extends ElementObj {
     }
 
     private void checkContraWaterDeath(GameBoard board) {
+        if (board.isOnContraSurface(getX() + 8, getX() + getW() - 8, getY() + getH())) {
+            return;
+        }
         if (board.isContraWaterHazard(getX() + 8, getX() + getW() - 8, getY() + getH() - 8, getY() + getH())) {
             health = 0;
             setLive(false);

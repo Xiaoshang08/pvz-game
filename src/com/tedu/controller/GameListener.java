@@ -11,6 +11,7 @@ import java.awt.event.KeyListener;
 import java.util.List;
 
 import com.tedu.element.ElementObj;
+import com.tedu.element.GameBoard;
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 
@@ -32,16 +33,20 @@ public class GameListener implements MouseListener, KeyListener {
     }
 
     @Override
-    public void mousePressed(MouseEvent e) {}
+    public void mousePressed(MouseEvent e) {
+    }
 
     @Override
-    public void mouseReleased(MouseEvent e) {}
+    public void mouseReleased(MouseEvent e) {
+    }
 
     @Override
-    public void mouseEntered(MouseEvent e) {}
+    public void mouseEntered(MouseEvent e) {
+    }
 
     @Override
-    public void mouseExited(MouseEvent e) {}
+    public void mouseExited(MouseEvent e) {
+    }
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -54,9 +59,22 @@ public class GameListener implements MouseListener, KeyListener {
     }
 
     @Override
-    public void keyTyped(KeyEvent e) {}
+    public void keyTyped(KeyEvent e) {
+    }
 
     private void dispatchKey(boolean pressed, int key) {
+        GameBoard board = GameBoard.getInstance();
+        if (board != null && board.isFireIceMode()) {
+            // 按键只传给火人和水人，其他元素不响应
+            for (ElementObj obj : em.getElementsByKey(GameElement.FIRE_MAN)) {
+                obj.keyClick(pressed, key);
+            }
+            for (ElementObj obj : em.getElementsByKey(GameElement.WATER_MAN)) {
+                obj.keyClick(pressed, key);
+            }
+            return;
+        }
+        // 原有植物大战僵尸 / Contra 的按键分发
         for (ElementObj obj : em.getElementsByKey(GameElement.BACKGROUND)) {
             obj.keyClick(pressed, key);
         }

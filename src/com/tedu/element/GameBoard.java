@@ -11,12 +11,14 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
 
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
+import com.tedu.manager.GameLoad;
 import com.tedu.util.GameImage;
 
 /**
@@ -120,13 +122,13 @@ public class GameBoard extends ElementObj {
     private static final int PREP_PANEL_X = 40;
     private static final int PREP_PANEL_Y = 130;
     private static final int PREP_PANEL_W = 340;
-    private static final int PREP_PANEL_H = 520;
+    private static final int PREP_PANEL_H = 430;
     private static final int PREP_START_BTN_X = 95;
-    private static final int PREP_START_BTN_Y = 575;
+    private static final int PREP_START_BTN_Y = 430;
     private static final int PREP_START_BTN_W = 220;
     private static final int PREP_START_BTN_H = 52;
     private static final int PREP_BACK_BTN_X = 95;
-    private static final int PREP_BACK_BTN_Y = 635;
+    private static final int PREP_BACK_BTN_Y = 490;
     private static final int PREP_BACK_BTN_W = 220;
     private static final int PREP_BACK_BTN_H = 42;
 
@@ -151,6 +153,7 @@ public class GameBoard extends ElementObj {
     private static final int CONTRA_SURFACE_SEARCH_BOTTOM = CONTRA_MAP_Y + CONTRA_MAP_H - 18;
     private static final int CONTRA_SPAWN_START_X = 760;
     private static final int CONTRA_SPAWN_END_MARGIN = 520;
+    private static final int CONTRA_EDGE_GRACE = 18;
     private static final int CONTRA_EXIT_LEFT_X = 3218 * CONTRA_SCALE;
     private static final int CONTRA_EXIT_TOP_Y = CONTRA_MAP_Y + 54 * CONTRA_SCALE;
     private static final int CONTRA_EXIT_BOTTOM_Y = CONTRA_MAP_Y + 184 * CONTRA_SCALE;
@@ -164,11 +167,12 @@ public class GameBoard extends ElementObj {
     private final int gapX = 0;
     private final int gapY = 0;
     private final int lawnStartX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * LAWN_X_RATIO);
-    private final int lawnStartY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * LAWN_CENTER_Y_RATIO) - (cellH * rows) / 2;
+    private final int lawnStartY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * LAWN_CENTER_Y_RATIO)
+            - (cellH * rows) / 2;
 
     private final Plant[][] plantGrid = new Plant[rows][cols];
     private final Random random = new Random();
-    private final String[] selectablePlants = {"豌豆射手", "向日葵", "寒冰射手", "坚果墙", "双发射手", "樱桃炸弹"};
+    private final String[] selectablePlants = { "豌豆射手", "向日葵" };
 
     private int zombieSpawnCounter = 0;
     private int sunDropCounter = 0;
@@ -188,7 +192,7 @@ public class GameBoard extends ElementObj {
     private boolean battleIntroPlaying = false;
     private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
-    private int unlockedLevel = 1;
+    private int unlockedLevel = 2;
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
@@ -248,14 +252,51 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawBattleScene(Graphics2D g) {
+        // 第二关
+        if (isFireIceMode()) {
+            drawFireIceScene(g);
+            return;
+        }
+        // 第三关
         if (isContraMode()) {
             drawContraScene(g);
             return;
         }
-
+        // 第一关
         g.setColor(new Color(221, 232, 196));
         g.fillRect(0, 0, getW(), getH());
         drawBattleEnvironment(g, getSceneCameraOffset(), battleIntroPlaying);
+    }
+
+    private void drawFireIceScene(Graphics2D g) {
+        // 调用 ElementManager 中所有地形和角色的绘制
+        // 参考后面文件 GameMainJPanel 中的绘制顺序
+        Map<GameElement, List<ElementObj>> all = em.getGameElements();
+        drawByType(all, GameElement.MAPS, g);
+        drawByType(all, GameElement.FIRE_TERRAIN, g);
+        drawByType(all, GameElement.WATER_TERRAIN, g);
+        drawByType(all, GameElement.FIRE_DOOR, g);
+        drawByType(all, GameElement.WATER_DOOR, g);
+        drawByType(all, GameElement.FIRE_DIAMOND, g);
+        drawByType(all, GameElement.WATER_DIAMOND, g);
+        drawByType(all, GameElement.TRAP_TERRAIN, g);
+        drawByType(all, GameElement.FIRE_MAN, g);
+        drawByType(all, GameElement.WATER_MAN, g);
+
+        // 显示提示消息（从 ElementManager.getTipMessage() 获取）
+        String tip = ElementManager.getManager().getTipMessage();
+        if (tip != null) {
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("微软雅黑", Font.BOLD, 24));
+            g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
+        }
+    }
+
+    private void drawByType(Map<GameElement, List<ElementObj>> all, GameElement type, Graphics g) {
+        for (ElementObj obj : all.get(type)) {
+            if (obj.isLive())
+                obj.showElement(g);
+        }
     }
 
     private void drawContraScene(Graphics2D g) {
@@ -477,9 +518,9 @@ public class GameBoard extends ElementObj {
 
         g.setColor(new Color(255, 245, 220));
         g.setFont(new Font("SansSerif", Font.BOLD, 18));
-        g.drawString("当前默认携带：豌豆射手、向日葵", 68, 520);
+        g.drawString("当前默认携带：豌豆射手、向日葵", 68, 350);
         g.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        g.drawString("先看看门前公路上的僵尸，再准备布阵。", 72, 548);
+        g.drawString("先看看门前公路上的僵尸，再准备布阵。", 72, 378);
 
         drawButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
                 new Color(86, 164, 63), "开始战斗");
@@ -488,11 +529,9 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawZombiePreviewShowcase(Graphics2D g, int ox) {
-        int baseX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.905) + ox;
-        int baseY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.48);
-        drawPreviewZombie(g, baseX, baseY, ZombiePreviewType.BASIC, "普通僵尸");
-        drawPreviewZombie(g, baseX + 82, baseY + 34, ZombiePreviewType.CONE, "路障僵尸");
-        drawPreviewZombie(g, baseX + 172, baseY - 8, ZombiePreviewType.BUCKET, "铁桶僵尸");
+        int roadCenterX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.885) + ox;
+        int roadCenterY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.60);
+        drawPreviewZombie(g, roadCenterX, roadCenterY, ZombiePreviewType.BASIC, "普通僵尸");
     }
 
     private void drawPreviewZombie(Graphics2D g, int x, int y, ZombiePreviewType type, String label) {
@@ -508,8 +547,8 @@ public class GameBoard extends ElementObj {
 
         if (type == ZombiePreviewType.CONE) {
             g.setColor(new Color(242, 131, 36));
-            int[] xs = {x + 14, x + 30, x + 48};
-            int[] ys = {y + 20, y - 10, y + 20};
+            int[] xs = { x + 14, x + 30, x + 48 };
+            int[] ys = { y + 20, y - 10, y + 20 };
             g.fillPolygon(xs, ys, 3);
         } else if (type == ZombiePreviewType.BUCKET) {
             g.setColor(new Color(136, 144, 154));
@@ -531,8 +570,8 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(222, 184, 122));
         g.fillRect(x + 40, y + 46, w, h);
         g.setColor(new Color(179, 89, 62));
-        int[] roofX = {x + 20, x + 105, x + 190};
-        int[] roofY = {y + 48, y - 18, y + 48};
+        int[] roofX = { x + 20, x + 105, x + 190 };
+        int[] roofY = { y + 48, y - 18, y + 48 };
         g.fillPolygon(scalePoints(roofX, x, scale), scalePoints(roofY, y, scale), 3);
         g.setColor(new Color(130, 81, 49));
         g.fillRect((int) (x + 94 * scale), (int) (y + 98 * scale), (int) (30 * scale), (int) (60 * scale));
@@ -581,16 +620,29 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawWinOverlay(Graphics2D g) {
-        g.setColor(new Color(0, 0, 0, 120));
-        g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
+        // 增加冰火人胜利绘制
+        if (isFireIceMode()) {
+            g.setColor(new Color(0, 0, 0, 120));
+            g.fillRect(0, 0, getW(), getH());
+            g.setColor(Color.YELLOW);
+            g.setFont(new Font("Serif", Font.BOLD, 44));
+            g.drawString("恭喜通关！", 500, 300);
+            g.setColor(Color.WHITE);
+            g.drawString("森林冰火人成功获得道具", 480, 360);
+        }
+        // 非冰火人（目前只有第一关的）胜利界面
+        else {
+            g.setColor(new Color(0, 0, 0, 120));
+            g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
 
-        g.setColor(new Color(241, 196, 15));
-        g.setFont(new Font("SansSerif", Font.BOLD, 44));
-        g.drawString("YOU WIN", 510, 300);
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        g.drawString("你已经击败了全部 20 只普通僵尸！", 470, 340);
-
+            g.setColor(new Color(241, 196, 15));
+            g.setFont(new Font("SansSerif", Font.BOLD, 44));
+            g.drawString("YOU WIN", 510, 300);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 20));
+            g.drawString("你已经击败了全部 20 只普通僵尸！", 470, 340);
+        }
+        // 绘制重新开始和返回首页按钮
         drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                 new Color(46, 204, 113), "重新开始");
         drawButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
@@ -657,6 +709,11 @@ public class GameBoard extends ElementObj {
             return;
         }
 
+        if (stage == GameStage.PLAYING && isFireIceMode()) {
+            // 冰火人模式不需要额外生成逻辑，所有更新已在 GameThread 中调用各元素的 model()
+            return;
+        }
+
         if (isContraMode()) {
             updateContraMode(gameTime);
             return;
@@ -680,7 +737,6 @@ public class GameBoard extends ElementObj {
         }
     }
 
-
     private void updateContraMode(long gameTime) {
         if (contraPlayer != null && contraPlayer.isLive()) {
             updateContraCameraFor(contraPlayer.getX());
@@ -694,6 +750,7 @@ public class GameBoard extends ElementObj {
             }
         }
     }
+
     @Override
     public void mouseClick(int mouseX, int mouseY) {
         if (stage == GameStage.HOME) {
@@ -716,10 +773,24 @@ public class GameBoard extends ElementObj {
                 enterPrepareStage(1);
                 return;
             }
+            // 新增第二关点击响应
+            if (isInLevel2Button(mouseX, mouseY) && unlockedLevel >= 2) {
+                selectedLevel = 2;
+                startBattle();
+                return;
+            }
             if (isInLevel3Button(mouseX, mouseY)) {
                 selectedLevel = 3;
                 startBattle();
                 return;
+            }
+            return;
+        }
+
+        if (stage == GameStage.PLAYING && isFireIceMode()) {
+            // 冰火人模式无需鼠标放置植物或铲子，只处理菜单按钮
+            if (isInMenuButton(mouseX, mouseY)) {
+                pauseGame();
             }
             return;
         }
@@ -854,7 +925,6 @@ public class GameBoard extends ElementObj {
         spawnedZombies++;
     }
 
-
     private void spawnGunZombie() {
         int[] spawnPoint = chooseContraZombieSpawnPoint();
         ElementManager.getManager().addElement(new GunZombie(spawnPoint[0], spawnPoint[1] - 82), GameElement.ZOMBIE);
@@ -923,11 +993,13 @@ public class GameBoard extends ElementObj {
         }
         return surfaces;
     }
+
     private void spawnSkySun() {
         int col = random.nextInt(cols);
         int x = getCellX(col) + (cellW - 36) / 2;
         int targetY = getCellY(random.nextInt(rows)) + 10;
-        ElementManager.getManager().addElement(Sun.createFallingSun(x, STATUS_BAR_Y + STATUS_BAR_H + 8, targetY, SKY_SUN_VALUE), GameElement.SUN);
+        ElementManager.getManager().addElement(
+                Sun.createFallingSun(x, STATUS_BAR_Y + STATUS_BAR_H + 8, targetY, SKY_SUN_VALUE), GameElement.SUN);
     }
 
     public void enterLevelSelectStage() {
@@ -981,7 +1053,14 @@ public class GameBoard extends ElementObj {
         gameOver = false;
         gameWin = false;
         stage = GameStage.PLAYING;
-        if (isContraMode()) {
+        if (selectedLevel == 2) { // 冰火人模式
+            currentSun = 0;
+            introCameraOffset = 0;
+            battleIntroPlaying = false;
+            // 加载地图和角色
+            GameLoad.MapLoad(1); // 地图文件为 1.map
+            GameLoad.loadFireWaterMan();
+        } else if (selectedLevel == 3) {
             currentSun = 0;
             contraCameraX = 0;
             introCameraOffset = 0;
@@ -1003,6 +1082,10 @@ public class GameBoard extends ElementObj {
     }
 
     public void restartGame() {
+        if (selectedLevel == 1) {
+            enterPrepareStage(1);
+            return;
+        }
         startBattle();
     }
 
@@ -1055,11 +1138,10 @@ public class GameBoard extends ElementObj {
         gameWin = true;
         paused = false;
         shovelMode = false;
-        if (unlockedLevel < 2) {
-            unlockedLevel = 2;
-        }
-        if (selectedLevel == 3 && unlockedLevel < 3) {
-            unlockedLevel = 3;
+        // 通关后解锁下一关（若当前关卡小于3且下一关尚未解锁）
+        int nextLevel = selectedLevel + 1;
+        if (nextLevel <= 3 && unlockedLevel < nextLevel) {
+            unlockedLevel = nextLevel;
         }
     }
 
@@ -1071,6 +1153,16 @@ public class GameBoard extends ElementObj {
         em.getElementsByKey(GameElement.BULLET).clear();
         em.getElementsByKey(GameElement.ENEMY_BULLET).clear();
         em.getElementsByKey(GameElement.SUN).clear();
+        em.getElementsByKey(GameElement.FIRE_MAN).clear();
+        em.getElementsByKey(GameElement.WATER_MAN).clear();
+        em.getElementsByKey(GameElement.FIRE_DOOR).clear();
+        em.getElementsByKey(GameElement.WATER_DOOR).clear();
+        em.getElementsByKey(GameElement.FIRE_DIAMOND).clear();
+        em.getElementsByKey(GameElement.WATER_DIAMOND).clear();
+        em.getElementsByKey(GameElement.FIRE_TERRAIN).clear();
+        em.getElementsByKey(GameElement.WATER_TERRAIN).clear();
+        em.getElementsByKey(GameElement.TRAP_TERRAIN).clear();
+        em.getElementsByKey(GameElement.MAPS).clear();
         contraPlayer = null;
         contraCameraX = 0;
     }
@@ -1095,20 +1187,28 @@ public class GameBoard extends ElementObj {
         return inRect(mouseX, mouseY, LEVEL1_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
     }
 
+    // 添加第二关点击区域的判断方法
+    public boolean isInLevel2Button(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, LEVEL2_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
+    }
+
     public boolean isInLevel3Button(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, LEVEL3_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
     }
 
     public boolean isInLevelSelectBackButton(int mouseX, int mouseY) {
-        return inRect(mouseX, mouseY, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H);
+        return inRect(mouseX, mouseY, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W,
+                LEVEL_SELECT_BACK_H);
     }
 
     public boolean isInPauseContinueButton(int mouseX, int mouseY) {
-        return inRect(mouseX, mouseY, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W, PAUSE_CONTINUE_BTN_H);
+        return inRect(mouseX, mouseY, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W,
+                PAUSE_CONTINUE_BTN_H);
     }
 
     public boolean isInPauseRestartButton(int mouseX, int mouseY) {
-        return inRect(mouseX, mouseY, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W, PAUSE_RESTART_BTN_H);
+        return inRect(mouseX, mouseY, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W,
+                PAUSE_RESTART_BTN_H);
     }
 
     public boolean isInPauseHomeButton(int mouseX, int mouseY) {
@@ -1193,29 +1293,80 @@ public class GameBoard extends ElementObj {
         if (!pressed) {
             return;
         }
-        if (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P) {
-            if (paused) {
+        if (pressed && (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P)) {
+            if (paused)
                 resumeGame();
-            } else {
+            else
                 pauseGame();
-            }
+            return;
+        }
+        // 如果在游戏中且为冰火人模式
+        if (stage == GameStage.PLAYING && isFireIceMode() && !paused && !gameOver && !gameWin) {
+            List<ElementObj> fireMen = em.getElementsByKey(GameElement.FIRE_MAN);
+            List<ElementObj> waterMen = em.getElementsByKey(GameElement.WATER_MAN);
+            for (ElementObj obj : fireMen)
+                obj.keyClick(pressed, key);
+            for (ElementObj obj : waterMen)
+                obj.keyClick(pressed, key);
+            return;
         }
     }
 
-    public boolean isGameStarted() { return gameStarted; }
-    public boolean isGameOver() { return gameOver; }
-    public boolean isGameWin() { return gameWin; }
-    public boolean isShovelMode() { return shovelMode; }
-    public boolean isPaused() { return paused; }
-    public boolean isInBattleStage() { return stage == GameStage.PLAYING; }
-    public int getSpawnedZombies() { return spawnedZombies; }
-    public int getMaxZombies() { return selectedLevel == 3 ? CONTRA_MAX_ZOMBIES : MAX_ZOMBIES; }
-    public int getCurrentSun() { return currentSun; }
-    public int getPeaShooterCost() { return PEA_SHOOTER_COST; }
-    public int getSunflowerCost() { return SUNFLOWER_COST; }
-    public PlantType getSelectedPlantType() { return selectedPlantType; }
-    public int getSelectedPlantCost() { return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST; }
-    public void addSun(int sun) { currentSun += sun; }
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public boolean isGameWin() {
+        return gameWin;
+    }
+
+    public boolean isShovelMode() {
+        return shovelMode;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public boolean isInBattleStage() {
+        return stage == GameStage.PLAYING;
+    }
+
+    public int getSpawnedZombies() {
+        return spawnedZombies;
+    }
+
+    public int getMaxZombies() {
+        return selectedLevel == 3 ? CONTRA_MAX_ZOMBIES : MAX_ZOMBIES;
+    }
+
+    public int getCurrentSun() {
+        return currentSun;
+    }
+
+    public int getPeaShooterCost() {
+        return PEA_SHOOTER_COST;
+    }
+
+    public int getSunflowerCost() {
+        return SUNFLOWER_COST;
+    }
+
+    public PlantType getSelectedPlantType() {
+        return selectedPlantType;
+    }
+
+    public int getSelectedPlantCost() {
+        return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST;
+    }
+
+    public void addSun(int sun) {
+        currentSun += sun;
+    }
 
     public Plant getPlant(int row, int col) {
         if (!isValidCell(row, col)) {
@@ -1296,7 +1447,6 @@ public class GameBoard extends ElementObj {
         return row >= 0 && row < rows && col >= 0 && col < cols;
     }
 
-
     public int getLawnLeftEdgeX() {
         return BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.105);
     }
@@ -1321,29 +1471,93 @@ public class GameBoard extends ElementObj {
         return laneTargets[row];
     }
 
-    public int getRows() { return rows; }
-    public int getCols() { return cols; }
-    public int getCellW() { return cellW; }
-    public int getCellH() { return cellH; }
-    public int getStatusBarX() { return STATUS_BAR_X; }
-    public int getStatusBarY() { return STATUS_BAR_Y; }
-    public int getStatusBarW() { return STATUS_BAR_W; }
-    public int getStatusBarH() { return STATUS_BAR_H; }
-    public int getPeaCardX() { return PEA_CARD_X; }
-    public int getPeaCardY() { return PEA_CARD_Y; }
-    public int getSunflowerCardX() { return SUNFLOWER_CARD_X; }
-    public int getSunflowerCardY() { return SUNFLOWER_CARD_Y; }
-    public int getPlantCardW() { return CARD_W; }
-    public int getPlantCardH() { return CARD_H; }
-    public int getShovelButtonX() { return SHOVEL_BTN_X; }
-    public int getShovelButtonY() { return SHOVEL_BTN_Y; }
-    public int getShovelButtonW() { return SHOVEL_BTN_W; }
-    public int getShovelButtonH() { return SHOVEL_BTN_H; }
-    public int getMenuButtonX() { return MENU_BTN_X; }
-    public int getMenuButtonY() { return MENU_BTN_Y; }
-    public int getMenuButtonW() { return MENU_BTN_W; }
-    public int getMenuButtonH() { return MENU_BTN_H; }
+    public int getRows() {
+        return rows;
+    }
 
+    public int getCols() {
+        return cols;
+    }
+
+    public int getCellW() {
+        return cellW;
+    }
+
+    public int getCellH() {
+        return cellH;
+    }
+
+    public int getStatusBarX() {
+        return STATUS_BAR_X;
+    }
+
+    public int getStatusBarY() {
+        return STATUS_BAR_Y;
+    }
+
+    public int getStatusBarW() {
+        return STATUS_BAR_W;
+    }
+
+    public int getStatusBarH() {
+        return STATUS_BAR_H;
+    }
+
+    public int getPeaCardX() {
+        return PEA_CARD_X;
+    }
+
+    public int getPeaCardY() {
+        return PEA_CARD_Y;
+    }
+
+    public int getSunflowerCardX() {
+        return SUNFLOWER_CARD_X;
+    }
+
+    public int getSunflowerCardY() {
+        return SUNFLOWER_CARD_Y;
+    }
+
+    public int getPlantCardW() {
+        return CARD_W;
+    }
+
+    public int getPlantCardH() {
+        return CARD_H;
+    }
+
+    public int getShovelButtonX() {
+        return SHOVEL_BTN_X;
+    }
+
+    public int getShovelButtonY() {
+        return SHOVEL_BTN_Y;
+    }
+
+    public int getShovelButtonW() {
+        return SHOVEL_BTN_W;
+    }
+
+    public int getShovelButtonH() {
+        return SHOVEL_BTN_H;
+    }
+
+    public int getMenuButtonX() {
+        return MENU_BTN_X;
+    }
+
+    public int getMenuButtonY() {
+        return MENU_BTN_Y;
+    }
+
+    public int getMenuButtonW() {
+        return MENU_BTN_W;
+    }
+
+    public int getMenuButtonH() {
+        return MENU_BTN_H;
+    }
 
     public int getSceneCameraOffset() {
         if (isContraMode()) {
@@ -1419,9 +1633,10 @@ public class GameBoard extends ElementObj {
     }
 
     private boolean hasContraSurfaceAt(int leftWorldX, int rightWorldX, int worldY) {
+        int centerX = leftWorldX + Math.max(1, (rightWorldX - leftWorldX) / 2);
         int[] samples = {
                 leftWorldX + 10,
-                leftWorldX + Math.max(10, (rightWorldX - leftWorldX) / 2),
+                centerX,
                 rightWorldX - 10
         };
         int matches = 0;
@@ -1430,7 +1645,22 @@ public class GameBoard extends ElementObj {
                 matches++;
             }
         }
-        return matches >= 2;
+        if (matches >= 2) {
+            return true;
+        }
+
+        return hasContraSurfaceNear(centerX, worldY)
+                || hasContraSurfaceNear(leftWorldX + 4, worldY)
+                || hasContraSurfaceNear(rightWorldX - 4, worldY);
+    }
+
+    private boolean hasContraSurfaceNear(int worldX, int worldY) {
+        for (int offset = -CONTRA_EDGE_GRACE; offset <= CONTRA_EDGE_GRACE; offset += 6) {
+            if (isContraSurfacePixel(worldX + offset, worldY)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isContraSurfacePixel(int worldX, int worldY) {
@@ -1518,6 +1748,11 @@ public class GameBoard extends ElementObj {
 
     public boolean isContraMode() {
         return stage == GameStage.PLAYING && selectedLevel == 3;
+    }
+
+    // 添加level2
+    public boolean isFireIceMode() {
+        return stage == GameStage.PLAYING && selectedLevel == 2; // 约定第2关为冰火人模式
     }
 
     public ContraPlayer getContraPlayer() {

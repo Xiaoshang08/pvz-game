@@ -20,6 +20,11 @@ public class GameInfoPanel extends ElementObj {
             return;
         }
 
+        if (board.isFireIceMode()) {
+            // 冰火人模式不显示植物大战僵尸的信息面板
+            return;
+        }
+
         if (board.isBattleIntroPlaying()) {
             return;
         }
@@ -41,7 +46,8 @@ public class GameInfoPanel extends ElementObj {
         int h = board.getStatusBarH();
 
         // 1. 主背景：渐变+圆角，替代纯色填充，增加层次感
-        GradientPaint bgGradient = new GradientPaint(x, y, new Color(252, 242, 210), x, y + h, new Color(248, 236, 195));
+        GradientPaint bgGradient = new GradientPaint(x, y, new Color(252, 242, 210), x, y + h,
+                new Color(248, 236, 195));
         g2.setPaint(bgGradient);
         g2.fillRoundRect(x, y, w, h, 22, 22);
         // 边框：更细腻的颜色+轻微描边，避免粗重感
@@ -50,7 +56,8 @@ public class GameInfoPanel extends ElementObj {
         g2.drawRoundRect(x, y, w, h, 22, 22);
 
         // 2. 阳光图标：双层渐变+高光，更立体
-        GradientPaint sunGradient = new GradientPaint(x + 18, y + 14, new Color(255, 225, 88), x + 48, y + 44, new Color(255, 210, 66));
+        GradientPaint sunGradient = new GradientPaint(x + 18, y + 14, new Color(255, 225, 88), x + 48, y + 44,
+                new Color(255, 210, 66));
         g2.setPaint(sunGradient);
         g2.fillOval(x + 18, y + 14, 30, 30);
         // 边框：更暖的色调，增加质感
@@ -103,7 +110,8 @@ public class GameInfoPanel extends ElementObj {
         int h = board.getStatusBarH();
 
         // 魂斗罗模式背景：深色渐变+半透明，更贴合主题
-        GradientPaint contraBg = new GradientPaint(x, y, new Color(25, 40, 35, 230), x, y + h, new Color(31, 48, 42, 220));
+        GradientPaint contraBg = new GradientPaint(x, y, new Color(25, 40, 35, 230), x, y + h,
+                new Color(31, 48, 42, 220));
         g2.setPaint(contraBg);
         g2.fillRoundRect(x, y, w, h, 18, 18);
         // 边框：更亮的绿色，增加科技感
@@ -148,8 +156,10 @@ public class GameInfoPanel extends ElementObj {
     private void drawPlantCard(Graphics2D g, GameBoard board, int x, int y, String name, int cost, boolean selected) {
         // 植物卡片：选中态渐变+未选中态浅绿，更自然
         GradientPaint cardBg = selected
-                ? new GradientPaint(x, y, new Color(85, 160, 85), x + board.getPlantCardW(), y + board.getPlantCardH(), new Color(109, 171, 16))
-                : new GradientPaint(x, y, new Color(210, 235, 170), x + board.getPlantCardW(), y + board.getPlantCardH(), new Color(196, 221, 154));
+                ? new GradientPaint(x, y, new Color(85, 160, 85), x + board.getPlantCardW(), y + board.getPlantCardH(),
+                        new Color(109, 171, 16))
+                : new GradientPaint(x, y, new Color(210, 235, 170), x + board.getPlantCardW(),
+                        y + board.getPlantCardH(), new Color(196, 221, 154));
 
         g.setPaint(cardBg);
         g.fillRoundRect(x, y, board.getPlantCardW(), board.getPlantCardH(), 14, 14);
@@ -196,7 +206,8 @@ public class GameInfoPanel extends ElementObj {
         int h = board.getMenuButtonH();
 
         // 菜单按钮：渐变背景+细边框，更精致
-        GradientPaint menuGradient = new GradientPaint(x, y, new Color(115, 120, 230), x + w, y + h, new Color(104, 109, 224));
+        GradientPaint menuGradient = new GradientPaint(x, y, new Color(115, 120, 230), x + w, y + h,
+                new Color(104, 109, 224));
         g.setPaint(menuGradient);
         g.fillRoundRect(x, y, w, h, 16, 16);
         g.setColor(Color.WHITE);

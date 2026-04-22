@@ -347,10 +347,6 @@ public abstract class ElementObj {
         this.roleType = roleType;
     }
 
-    public void setMovable(boolean movable) {
-        this.movable = movable;
-    }
-
     public void setRequiredDiamondCount(int requiredDiamondCount) {
         this.requiredDiamondCount = requiredDiamondCount;
     }

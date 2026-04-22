@@ -1032,6 +1032,16 @@ public class GameBoard extends ElementObj {
         em.getElementsByKey(GameElement.BULLET).clear();
         em.getElementsByKey(GameElement.ENEMY_BULLET).clear();
         em.getElementsByKey(GameElement.SUN).clear();
+        em.getElementsByKey(GameElement.FIRE_MAN).clear();
+        em.getElementsByKey(GameElement.WATER_MAN).clear();
+        em.getElementsByKey(GameElement.FIRE_DOOR).clear();
+        em.getElementsByKey(GameElement.WATER_DOOR).clear();
+        em.getElementsByKey(GameElement.FIRE_DIAMOND).clear();
+        em.getElementsByKey(GameElement.WATER_DIAMOND).clear();
+        em.getElementsByKey(GameElement.FIRE_TERRAIN).clear();
+        em.getElementsByKey(GameElement.WATER_TERRAIN).clear();
+        em.getElementsByKey(GameElement.TRAP_TERRAIN).clear();
+        em.getElementsByKey(GameElement.MAPS).clear();
         contraPlayer = null;
         contraCameraX = 0;
     }

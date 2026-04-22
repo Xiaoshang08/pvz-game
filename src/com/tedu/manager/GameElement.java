@@ -20,11 +20,11 @@ public enum GameElement {
     MAPS,
     FIRE_TERRAIN,
     WATER_TERRAIN,
-    WATER_MAN,
-    FIRE_MAN,
+    TRAP_TERRAIN,
     FIRE_DOOR,
     WATER_DOOR,
     FIRE_DIAMOND,
     WATER_DIAMOND,
-    TRAP_TERRAIN
+    WATER_MAN,
+    FIRE_MAN
 }

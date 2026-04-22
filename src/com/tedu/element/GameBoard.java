@@ -154,11 +154,15 @@ public class GameBoard extends ElementObj {
     private static final int CONTRA_SPAWN_START_X = 760;
     private static final int CONTRA_SPAWN_END_MARGIN = 520;
     private static final int CONTRA_EDGE_GRACE = 18;
+    private static final int CONTRA_BOSS_SOURCE_X = 1620;
+    private static final int CONTRA_BOSS_W = 224;
+    private static final int CONTRA_BOSS_H = 180;
     private static final int CONTRA_EXIT_LEFT_X = 3218 * CONTRA_SCALE;
     private static final int CONTRA_EXIT_TOP_Y = CONTRA_MAP_Y + 54 * CONTRA_SCALE;
     private static final int CONTRA_EXIT_BOTTOM_Y = CONTRA_MAP_Y + 184 * CONTRA_SCALE;
     private final BufferedImage battleSceneImage = GameImage.get(BATTLE_SCENE_IMAGE_PATH);
     private final BufferedImage contraStageImage = GameImage.get(CONTRA_STAGE_IMAGE_PATH);
+    private final BufferedImage defeatImage = GameImage.get("images/ui/defeat.png");
 
     private final int rows = 5;
     private final int cols = 9;
@@ -196,6 +200,8 @@ public class GameBoard extends ElementObj {
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
+    private boolean contraBossSpawned = false;
+    private boolean contraBossDefeated = false;
 
     // ==================== 剧情系统新增字段 ====================
     private boolean storyPlayed = false; // 开场剧情是否已播放
@@ -232,7 +238,7 @@ public class GameBoard extends ElementObj {
             // 第二关玩法
             "玩法：\n• 控制角色在冰面/火地上移动\n• 收集冰之精魄和火之精魄\n• 避开陷阱，注意冰冻、火焰和毒液伤害",
             // 第三关玩法
-            "玩法：\n• 点击空格射击\n• 击中敌人核心造成巨大伤害\n• 躲避敌人子弹幕\n• 消灭所有敌人"
+            "玩法：\n• 点击空格射击\n• 击败洪粤贤\n• 躲避敌人子弹幕\n• 击败 boss 后进入最右侧基地"
     };
     private final String[] winMessages = {
             "打得漂亮！不过红月仙不会善罢甘休……",
@@ -884,6 +890,16 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawGameOverOverlay(Graphics2D g) {
+        if (defeatImage != null) {
+            g.drawImage(defeatImage, 0, 0, getW(), getH(), null);
+            g.setColor(new Color(0, 0, 0, 70));
+            g.fillRect(0, 0, getW(), getH());
+            drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
+                    new Color(243, 156, 18), "重新开始");
+            drawButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
+                    new Color(52, 152, 219), "返回首页");
+            return;
+        }
         g.setColor(new Color(0, 0, 0, 130));
         g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
 
@@ -996,6 +1012,10 @@ public class GameBoard extends ElementObj {
         if (contraPlayer != null && contraPlayer.isLive()) {
             updateContraCameraFor(contraPlayer.getX());
         }
+        if (!contraBossSpawned) {
+            spawnContraBoss();
+        }
+
         if (spawnedZombies < getMaxZombies()) {
             zombieSpawnCounter++;
             if (zombieSpawnCounter >= 58) {
@@ -1248,6 +1268,15 @@ public class GameBoard extends ElementObj {
         spawnedZombies++;
     }
 
+    private void spawnContraBoss() {
+        int x = CONTRA_BOSS_SOURCE_X * CONTRA_SCALE;
+        int surfaceY = getContraSurfaceBelow(x + 42, x + CONTRA_BOSS_W - 42, CONTRA_TOP_Y);
+        int y = (surfaceY == -1 ? CONTRA_GROUND_Y : surfaceY) - CONTRA_BOSS_H;
+        ElementManager.getManager().addElement(new BossZombie(x, y), GameElement.ZOMBIE);
+        contraBossSpawned = true;
+        contraBossDefeated = false;
+    }
+
     private int[] chooseContraZombieSpawnPoint() {
         int spawnableWidth = Math.max(1, CONTRA_MAP_W - CONTRA_SPAWN_START_X - CONTRA_SPAWN_END_MARGIN);
         double progress = getMaxZombies() <= 1 ? 0.0 : (double) spawnedZombies / (getMaxZombies() - 1);
@@ -1356,6 +1385,8 @@ public class GameBoard extends ElementObj {
         totalKills = 0;
         spawnedZombies = 0;
         zombieSpawnCounter = 0;
+        contraBossSpawned = false;
+        contraBossDefeated = false;
         sunDropCounter = 0;
         startProtectCounter = 0;
         currentSun = INITIAL_SUN;
@@ -1432,6 +1463,8 @@ public class GameBoard extends ElementObj {
         battleIntroPlaying = false;
         introZombieRetreatOffset = 0;
         contraCameraX = 0;
+        contraBossSpawned = false;
+        contraBossDefeated = false;
         // 重置胜利消息
         winMessage = null;
         // 注意：不清空 storyPlayed 和 levelTipShown，保持玩家进度
@@ -1908,6 +1941,14 @@ public class GameBoard extends ElementObj {
         int centerX = contraPlayer.getX() + contraPlayer.getW() / 2;
         int centerY = contraPlayer.getY() + contraPlayer.getH() / 2;
         return centerX >= CONTRA_EXIT_LEFT_X && centerY >= CONTRA_EXIT_TOP_Y && centerY <= CONTRA_EXIT_BOTTOM_Y;
+    }
+
+    public boolean isContraBossDefeated() {
+        return contraBossDefeated;
+    }
+
+    public void markContraBossDefeated() {
+        contraBossDefeated = true;
     }
 
     public int getContraSurfaceBelow(int leftWorldX, int rightWorldX, int fromWorldY) {

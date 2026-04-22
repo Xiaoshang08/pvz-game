@@ -100,6 +100,7 @@ public class ContraPlayer extends ElementObj {
         if (board != null) {
             board.updateContraCameraFor(getX());
         }
+        checkContraAbyssDeath(board);
         if (shootCooldown > 0) {
             shootCooldown--;
         }
@@ -177,6 +178,7 @@ public class ContraPlayer extends ElementObj {
             }
         }
         checkContraWaterDeath(board);
+        checkContraAbyssDeath(board);
     }
 
     private void checkContraWaterDeath(GameBoard board) {
@@ -184,6 +186,17 @@ public class ContraPlayer extends ElementObj {
             return;
         }
         if (board.isContraWaterHazard(getX() + 8, getX() + getW() - 8, getY() + getH() - 8, getY() + getH())) {
+            health = 0;
+            setLive(false);
+            board.triggerGameOver();
+        }
+    }
+
+    private void checkContraAbyssDeath(GameBoard board) {
+        if (board == null || !isLive()) {
+            return;
+        }
+        if (getY() > board.getH()) {
             health = 0;
             setLive(false);
             board.triggerGameOver();

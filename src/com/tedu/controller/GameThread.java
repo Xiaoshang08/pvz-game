@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.tedu.element.Bullet;
+import com.tedu.element.BossZombie;
 import com.tedu.element.ContraPeaBullet;
 import com.tedu.element.ContraPlayer;
 import com.tedu.element.ElementObj;
@@ -213,8 +214,10 @@ public class GameThread extends Thread {
             }
             GunZombie zombie = (GunZombie) zombieObj;
             if (zombie.pk(player)) {
-                player.takeDamage(2);
-                zombie.setLive(false);
+                player.takeDamage(zombie.getContactDamage());
+                if (!(zombie instanceof BossZombie)) {
+                    zombie.setLive(false);
+                }
             }
         }
     }
@@ -264,6 +267,13 @@ public class GameThread extends Thread {
             return;
         }
 
+        if (board.isContraMode()) {
+            if (board.isContraBossDefeated() && board.isContraPlayerInExit()) {
+                board.triggerGameWin();
+            }
+            return;
+        }
+
         if (board.getTotalKills() < board.getMaxZombies()) {
             return;
         }
@@ -273,9 +283,6 @@ public class GameThread extends Thread {
             if (zombieObj.isLive()) {
                 return;
             }
-        }
-        if (board.isContraMode() && !board.isContraPlayerInExit()) {
-            return;
         }
         board.triggerGameWin();
     }

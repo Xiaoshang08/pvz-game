@@ -5,27 +5,34 @@ import java.awt.Graphics;
 
 public class EnemyBullet extends ElementObj {
     private static final int SPEED = 9;
-    private static final int DAMAGE = 1;
+    private static final int DEFAULT_DAMAGE = 1;
     private double preciseX;
     private double preciseY;
     private double speedX;
     private double speedY;
+    private int damage;
 
     public EnemyBullet(int x, int y) {
         super(x, y, 18, 6, null);
-        initMotion(x, y, -SPEED, 0);
+        initMotion(x, y, -SPEED, 0, DEFAULT_DAMAGE);
     }
 
     public EnemyBullet(int x, int y, double speedX, double speedY) {
         super(x, y, 12, 12, null);
-        initMotion(x, y, speedX, speedY);
+        initMotion(x, y, speedX, speedY, DEFAULT_DAMAGE);
     }
 
-    private void initMotion(int x, int y, double speedX, double speedY) {
+    public EnemyBullet(int x, int y, double speedX, double speedY, int damage) {
+        super(x, y, 12, 12, null);
+        initMotion(x, y, speedX, speedY, damage);
+    }
+
+    private void initMotion(int x, int y, double speedX, double speedY, int damage) {
         preciseX = x;
         preciseY = y;
         this.speedX = speedX;
         this.speedY = speedY;
+        this.damage = damage;
     }
 
     @Override
@@ -53,6 +60,6 @@ public class EnemyBullet extends ElementObj {
     }
 
     public int getDamage() {
-        return DAMAGE;
+        return damage;
     }
 }

@@ -31,6 +31,7 @@ import com.tedu.util.GameImage;
  */
 public class GameBoard extends ElementObj {
     private static GameBoard instance;
+    private BufferedImage homeBackgroundImage;
     private BufferedImage levelSelectBackgroundImage;
 
     private static final int WINDOW_W = 1280;
@@ -281,6 +282,27 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawHomeScene(Graphics2D g) {
+        if (homeBackgroundImage == null) {
+            homeBackgroundImage = loadLocalImage("assets/images/background/Mini World Adventure.png");
+        }
+        if (homeBackgroundImage != null) {
+            g.drawImage(homeBackgroundImage, 0, 0, getW(), getH(), null);
+
+            g.setColor(new Color(0, 0, 0, 85));
+            g.fillRoundRect(460, 315, 360, 245, 34, 34);
+            g.setColor(new Color(255, 244, 184));
+            g.setFont(new Font("Serif", Font.BOLD, 34));
+            g.drawString("植物大战僵尸", 535, 370);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 18));
+            g.drawString("森林冰火小人版 Mini Demo", 525, 402);
+
+            drawButton(g, HOME_BUTTON_X, HOME_START_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
+                    new Color(83, 160, 56), "开始游戏");
+            drawButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
+                    new Color(118, 118, 118), "退出游戏");
+            return;
+        }
+
         g.setColor(new Color(168, 219, 247));
         g.fillRect(0, 0, getW(), 410);
         g.setColor(new Color(196, 227, 145));
@@ -1358,7 +1380,7 @@ public class GameBoard extends ElementObj {
     }
 
     public int getContraTopBoundY() {
-        return CONTRA_TOP_Y;
+        return 0;
     }
 
     public boolean isContraPlayerInExit() {

@@ -180,7 +180,7 @@ public class GameBoard extends ElementObj {
     private boolean battleIntroPlaying = false;
     private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
-    private int unlockedLevel = 1;
+    private int unlockedLevel = 2;
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
@@ -725,6 +725,12 @@ public class GameBoard extends ElementObj {
                 enterPrepareStage(1);
                 return;
             }
+            // 新增第二关点击响应
+            if (isInLevel2Button(mouseX, mouseY) && unlockedLevel >= 2) {
+                selectedLevel = 2;
+                startBattle();
+                return;
+            }
             if (isInLevel3Button(mouseX, mouseY)) {
                 selectedLevel = 3;
                 startBattle();
@@ -1016,11 +1022,10 @@ public class GameBoard extends ElementObj {
         gameWin = true;
         paused = false;
         shovelMode = false;
-        if (unlockedLevel < 2) {
-            unlockedLevel = 2;
-        }
-        if (selectedLevel == 3 && unlockedLevel < 3) {
-            unlockedLevel = 3;
+        // 通关后解锁下一关（若当前关卡小于3且下一关尚未解锁）
+        int nextLevel = selectedLevel + 1;
+        if (nextLevel <= 3 && unlockedLevel < nextLevel) {
+            unlockedLevel = nextLevel;
         }
     }
 
@@ -1064,6 +1069,11 @@ public class GameBoard extends ElementObj {
 
     public boolean isInLevel1Button(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, LEVEL1_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
+    }
+
+    // 添加第二关点击区域的判断方法
+    public boolean isInLevel2Button(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, LEVEL2_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
     }
 
     public boolean isInLevel3Button(int mouseX, int mouseY) {

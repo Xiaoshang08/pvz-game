@@ -8,10 +8,12 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
@@ -29,6 +31,7 @@ import com.tedu.util.GameImage;
  */
 public class GameBoard extends ElementObj {
     private static GameBoard instance;
+    private BufferedImage levelSelectBackgroundImage;
 
     private static final int WINDOW_W = 1280;
     private static final int WINDOW_H = 720;
@@ -72,9 +75,9 @@ public class GameBoard extends ElementObj {
 
     private static final int HOME_BUTTON_W = 220;
     private static final int HOME_BUTTON_H = 58;
-    private static final int HOME_BUTTON_X = 865;
-    private static final int HOME_START_BTN_Y = 285;
-    private static final int HOME_EXIT_BTN_Y = 360;
+    private static final int HOME_BUTTON_X = 530;
+    private static final int HOME_START_BTN_Y = 420;
+    private static final int HOME_EXIT_BTN_Y = 495;
 
     private static final int LEVEL_CARD_W = 220;
     private static final int LEVEL_CARD_H = 280;
@@ -83,7 +86,7 @@ public class GameBoard extends ElementObj {
     private static final int LEVEL2_X = 530;
     private static final int LEVEL3_X = 840;
     private static final int LEVEL_SELECT_BACK_X = 520;
-    private static final int LEVEL_SELECT_BACK_Y = 600;
+    private static final int LEVEL_SELECT_BACK_Y = 560;
     private static final int LEVEL_SELECT_BACK_W = 240;
     private static final int LEVEL_SELECT_BACK_H = 54;
 
@@ -206,6 +209,15 @@ public class GameBoard extends ElementObj {
         SUNFLOWER
     }
 
+    private BufferedImage loadLocalImage(String path) {
+        try {
+            File file = new File(path);
+            return file.exists() ? ImageIO.read(file) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     public enum GameStage {
         HOME,
         LEVEL_SELECT,
@@ -307,6 +319,12 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawLevelSelectScene(Graphics2D g) {
+        if (levelSelectBackgroundImage == null) {
+            levelSelectBackgroundImage = loadLocalImage("assets/images/background/backgroud2.png");
+        }
+        if (levelSelectBackgroundImage != null) {
+            g.drawImage(levelSelectBackgroundImage, 0, 0, getW(), getH(), null);
+        } else {
         g.setColor(new Color(168, 219, 247));
         g.fillRect(0, 0, getW(), 410);
         g.setColor(new Color(196, 227, 145));
@@ -318,7 +336,9 @@ public class GameBoard extends ElementObj {
         g.fillOval(-60, 390, 620, 250);
         g.fillOval(320, 430, 980, 290);
 
-        g.setColor(new Color(255, 255, 255, 228));
+        }
+
+        g.setColor(levelSelectBackgroundImage != null ? new Color(25, 87, 87) : new Color(255, 255, 255, 228));
         g.setFont(new Font("Serif", Font.BOLD, 42));
         g.drawString("选择关卡", 520, 120);
         g.setFont(new Font("SansSerif", Font.PLAIN, 22));

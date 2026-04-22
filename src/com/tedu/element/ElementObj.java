@@ -295,8 +295,8 @@ public abstract class ElementObj {
         int terrainTop = terrain.getY();
         if (Math.abs(footY - terrainTop) > 5)
             return false;
-        return this.getX() + this.getW() > terrain.getX() &&
-                this.getX() < terrain.getX() + terrain.getW();
+        return this.getX() + this.getW() - 16 > terrain.getX() &&
+                this.getX() + 16 < terrain.getX() + terrain.getW();
     }
 
     public ElementObj createElement(String str) {

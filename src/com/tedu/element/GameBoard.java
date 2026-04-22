@@ -282,14 +282,6 @@ public class GameBoard extends ElementObj {
         drawByType(all, GameElement.TRAP_TERRAIN, g);
         drawByType(all, GameElement.FIRE_MAN, g);
         drawByType(all, GameElement.WATER_MAN, g);
-
-        // 显示提示消息（从 ElementManager.getTipMessage() 获取）
-        String tip = ElementManager.getManager().getTipMessage();
-        if (tip != null) {
-            g.setColor(Color.BLACK);
-            g.setFont(new Font("微软雅黑", Font.BOLD, 24));
-            g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
-        }
     }
 
     private void drawByType(Map<GameElement, List<ElementObj>> all, GameElement type, Graphics g) {
@@ -599,6 +591,15 @@ public class GameBoard extends ElementObj {
         } else if (gameOver) {
             drawGameOverOverlay((Graphics2D) g);
         }
+        // 冰火人模式：显示提示消息（在所有元素绘制完成后显示，确保在最上层）
+        else if (isFireIceMode()) {
+            String tip = ElementManager.getManager().getTipMessage();
+            if (tip != null) {
+                g.setColor(Color.BLACK);
+                g.setFont(new Font("微软雅黑", Font.BOLD, 24));
+                g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
+            }
+        }
     }
 
     private void drawPauseOverlay(Graphics2D g) {
@@ -626,9 +627,9 @@ public class GameBoard extends ElementObj {
             g.fillRect(0, 0, getW(), getH());
             g.setColor(Color.YELLOW);
             g.setFont(new Font("Serif", Font.BOLD, 44));
-            g.drawString("恭喜通关！", 500, 300);
+            g.drawString("恭喜通关！", 480, 300);
             g.setColor(Color.WHITE);
-            g.drawString("森林冰火人成功获得道具", 480, 360);
+            g.drawString("森林冰火人成功获得道具", 420, 360);
         }
         // 非冰火人（目前只有第一关的）胜利界面
         else {
@@ -788,6 +789,18 @@ public class GameBoard extends ElementObj {
         }
 
         if (stage == GameStage.PLAYING && isFireIceMode()) {
+            // 冰火人模式：胜利或游戏结束状态下处理按钮点击
+            if (gameWin || gameOver) {
+                if (isInRestartButton(mouseX, mouseY)) {
+                    restartGame();
+                    return;
+                }
+                if (isInHomeButton(mouseX, mouseY)) {
+                    returnToHome();
+                    return;
+                }
+                return;
+            }
             // 冰火人模式无需鼠标放置植物或铲子，只处理菜单按钮
             if (isInMenuButton(mouseX, mouseY)) {
                 pauseGame();

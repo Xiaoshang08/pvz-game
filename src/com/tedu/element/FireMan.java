@@ -26,6 +26,26 @@ public class FireMan extends ElementObj {
     }
 
     @Override
+    protected void move() {
+        int dx = 0;
+        if (left)
+            dx = -getMoveSpeed();
+        if (right)
+            dx = getMoveSpeed();
+        if (dx != 0)
+            moveX(dx);
+
+        vy += GRAVITY;
+        moveY((int) vy);
+        checkGround();
+
+        checkPickupDiamond();
+        checkOpenDoor();
+        checkDeathByTerrain();
+        checkTrapDeath();
+    }
+
+    @Override
     public ElementObj createElement(String str) {
         String[] split = str.split(",");
         setX(Integer.parseInt(split[0]));
@@ -36,7 +56,6 @@ public class FireMan extends ElementObj {
         setH(icon.getIconHeight());
         setRoleType("fire");
         moveSpeed = 5;
-        setMovable(true);
         setRequiredDiamondCount(getRequiredDiamondCount());
         return this;
     }

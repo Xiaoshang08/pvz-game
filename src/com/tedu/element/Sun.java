@@ -15,7 +15,7 @@ import com.tedu.util.GameImage;
  * 2. 向日葵产出的阳光：停留片刻后自动收集。
  */
 public class Sun extends ElementObj {
-    private static final int SIZE = 36;
+    private static final int SIZE = 96;
     private static final int FALL_SPEED = 2;
     private static final String IMAGE_PATH = "images/items/sun.png";
     private static final BufferedImage IMAGE = GameImage.get(IMAGE_PATH);

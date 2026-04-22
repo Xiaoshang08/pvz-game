@@ -29,7 +29,12 @@ import com.tedu.util.GameImage;
  */
 public class GameBoard extends ElementObj {
     private static GameBoard instance;
+<<<<<<< Updated upstream
 
+=======
+    private BufferedImage backgroundImage;  // 主菜单背景图片
+    private BufferedImage backgroundImage2; // 关卡选择背景图片
+>>>>>>> Stashed changes
     private static final int WINDOW_W = 1280;
     private static final int WINDOW_H = 720;
 
@@ -83,7 +88,7 @@ public class GameBoard extends ElementObj {
     private static final int LEVEL2_X = 530;
     private static final int LEVEL3_X = 840;
     private static final int LEVEL_SELECT_BACK_X = 520;
-    private static final int LEVEL_SELECT_BACK_Y = 600;
+    private static final int LEVEL_SELECT_BACK_Y = 560;
     private static final int LEVEL_SELECT_BACK_W = 240;
     private static final int LEVEL_SELECT_BACK_H = 54;
 
@@ -202,6 +207,30 @@ public class GameBoard extends ElementObj {
         SUNFLOWER
     }
 
+<<<<<<< Updated upstream
+=======
+    private void loadBackgroundImage() {
+        try {
+            backgroundImage = ImageIO.read(new File("assets/images/background/Mini World Adventure.png"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            backgroundImage = null;
+        }
+    }
+
+    private void loadBackgroundImage2() {
+        try {
+            backgroundImage2 = ImageIO.read(new File("assets/images/background/background2.png"));
+            if (backgroundImage2 == null) {
+                System.err.println("background2.png 未找到");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            backgroundImage2 = null;
+        }
+    }
+
+>>>>>>> Stashed changes
     public enum GameStage {
         HOME,
         LEVEL_SELECT,
@@ -258,17 +287,32 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(0, 0, 0, 88));
         g.fillRect(0, 0, getW(), 84);
         g.setColor(new Color(226, 241, 196));
-        g.setFont(new Font("SansSerif", Font.BOLD, 23));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 23));
         g.drawString("Level 3: Contra Peashooter", 34, 36);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 15));
         g.drawString("Move: WASD / Arrow keys    Shoot: Space    Pause: P or Esc", 34, 62);
     }
 
     private void drawHomeScene(Graphics2D g) {
+<<<<<<< Updated upstream
         g.setColor(new Color(168, 219, 247));
         g.fillRect(0, 0, getW(), 410);
         g.setColor(new Color(196, 227, 145));
         g.fillRect(0, 410, getW(), 310);
+=======
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        if (backgroundImage == null) {
+            loadBackgroundImage();
+        }
+
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getW(), getH(), null);
+        } else {
+            g.setColor(new Color(30, 40, 30));
+            g.fillRect(0, 0, getW(), getH());
+        }
+>>>>>>> Stashed changes
 
         g.setColor(new Color(255, 244, 170));
         g.fillOval(80, 55, 120, 120);
@@ -287,6 +331,7 @@ public class GameBoard extends ElementObj {
         g.drawString("整理好植物阵容后，就出发迎战吧！", 82, 349);
 
         g.setColor(new Color(118, 82, 53));
+<<<<<<< Updated upstream
         g.fillRoundRect(790, 145, 320, 350, 34, 34);
         g.setColor(new Color(150, 121, 94));
         g.fillRoundRect(812, 167, 276, 306, 28, 28);
@@ -300,66 +345,147 @@ public class GameBoard extends ElementObj {
                 new Color(83, 160, 56), "开始游戏");
         drawButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
                 new Color(118, 118, 118), "退出游戏");
+=======
+        g.fillRoundRect(panelX, panelY, panelW, panelH, 34, 34);
+        g.setColor(new Color(150, 121, 94, 220));
+        g.fillRoundRect(panelX + 22, panelY + 22, panelW - 44, panelH - 44, 28, 28);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        g.setColor(new Color(255, 255, 200, 60));
+        g.drawRoundRect(panelX + 22, panelY + 22, panelW - 44, panelH - 44, 28, 28);
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 34));
+        drawTextWithShadow(g, "植物大战僵尸", 545, 370, new Color(255, 235, 180), new Color(50, 30, 15));
+        g.setFont(new Font("Microsoft YaHei", Font.ITALIC, 18));
+        drawTextWithShadow(g, "森林冰火小人版 Mini Demo", 525, 400, new Color(230, 210, 150), new Color(50, 30, 15));
+
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 34));
+        drawTextWithShadow(g, "欢迎来到森林边缘的草坪", 820, 600, new Color(255, 255, 240), new Color(80, 60, 30));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 14));
+        drawTextWithShadow(g, "冰火小人的家受到了僵尸的进攻。", 830, 640, new Color(255, 255, 240), new Color(80, 60, 30));
+        drawTextWithShadow(g, "他们请来了老朋友植物们，一起守住这条通往家门前的道路。", 830, 670, new Color(255, 255, 240), new Color(80, 60, 30));
+        drawTextWithShadow(g, "整理好植物阵容后，就出发迎战吧！", 830, 700, new Color(255, 255, 240), new Color(80, 60, 30));
+
+        int btnX = 530;
+        int startBtnY = 420;
+        int exitBtnY = 495;
+
+        drawStyledButton(g, btnX, startBtnY, HOME_BUTTON_W, HOME_BUTTON_H, new Color(83, 160, 56), "开始游戏");
+        drawStyledButton(g, btnX, exitBtnY, HOME_BUTTON_W, HOME_BUTTON_H, new Color(118, 118, 118), "退出游戏");
+    }
+
+    private void drawTextWithShadow(Graphics2D g, String text, int x, int y, Color textColor, Color shadowColor) {
+        g.setColor(shadowColor);
+        g.drawString(text, x + 2, y + 2);
+        g.setColor(textColor);
+        g.drawString(text, x, y);
+    }
+
+    /**
+     * 绘制美化版按钮（双层阴影 + 渐变背景 + 居中文字，无白色描边）
+     */
+    private void drawStyledButton(Graphics2D g, int x, int y, int w, int h, Color baseColor, String text) {
+        // 双层阴影
+        g.setColor(new Color(0, 0, 0, 60));
+        g.fillRoundRect(x + 3, y + 3, w, h, 24, 24);
+        g.setColor(new Color(0, 0, 0, 30));
+        g.fillRoundRect(x + 5, y + 5, w, h, 24, 24);
+
+        // 渐变背景
+        GradientPaint grad = new GradientPaint(x, y, baseColor.brighter(), x, y + h, baseColor.darker());
+        g.setPaint(grad);
+        g.fillRoundRect(x, y, w, h, 24, 24);
+
+        // 文字（白色，居中）
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, h >= 50 ? 20 : 16));
+        FontMetrics fm = g.getFontMetrics();
+        int textX = x + (w - fm.stringWidth(text)) / 2;
+        int textY = y + (h + fm.getAscent()) / 2 - 2;
+        g.drawString(text, textX, textY);
+>>>>>>> Stashed changes
     }
 
     private void drawLevelSelectScene(Graphics2D g) {
-        g.setColor(new Color(168, 219, 247));
-        g.fillRect(0, 0, getW(), 410);
-        g.setColor(new Color(196, 227, 145));
-        g.fillRect(0, 410, getW(), 310);
+        if (backgroundImage2 == null) {
+            loadBackgroundImage2();
+        }
 
-        g.setColor(new Color(255, 244, 170));
-        g.fillOval(80, 55, 120, 120);
-        g.setColor(new Color(140, 208, 92));
-        g.fillOval(-60, 390, 620, 250);
-        g.fillOval(320, 430, 980, 290);
+        if (backgroundImage2 != null) {
+            g.drawImage(backgroundImage2, 0, 0, getW(), getH(), null);
+        } else {
+            g.setColor(new Color(168, 219, 247));
+            g.fillRect(0, 0, getW(), 410);
+            g.setColor(new Color(196, 227, 145));
+            g.fillRect(0, 410, getW(), 310);
+            g.setColor(new Color(255, 244, 170));
+            g.fillOval(80, 55, 120, 120);
+            g.setColor(new Color(140, 208, 92));
+            g.fillOval(-60, 390, 620, 250);
+            g.fillOval(320, 430, 980, 290);
+        }
 
-        g.setColor(new Color(255, 255, 255, 228));
-        g.setFont(new Font("Serif", Font.BOLD, 42));
-        g.drawString("选择关卡", 520, 120);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 22));
-        g.drawString("先从第一关出发吧，后面的关卡以后再慢慢开放。", 355, 165);
+        g.setColor(new Color(25, 87, 87));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 42));
+        g.drawString("选择关卡", 550, 200);
 
         drawLevelCard(g, LEVEL1_X, LEVEL_CARD_Y, 1, true, "门前草坪", "当前可挑战");
         drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "林间小路", "暂未解锁");
         drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "夜色庭院", "暂未解锁");
-
         drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "Contra PVZ", "WASD + Space");
-        drawButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
-                new Color(112, 112, 112), "返回首页");
+
+        drawStyledButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y,
+                LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H, new Color(112, 112, 112), "返回首页");
     }
 
     private void drawLevelCard(Graphics2D g, int x, int y, int level, boolean unlocked, String title, String desc) {
-        Color outer = unlocked ? new Color(112, 76, 34) : new Color(95, 95, 95);
-        Color inner = unlocked ? new Color(187, 141, 82) : new Color(146, 146, 146);
-        g.setColor(outer);
-        g.fillRoundRect(x, y, LEVEL_CARD_W, LEVEL_CARD_H, 28, 28);
-        g.setColor(inner);
-        g.fillRoundRect(x + 12, y + 12, LEVEL_CARD_W - 24, LEVEL_CARD_H - 24, 22, 22);
+        // 卡片阴影（双层）
+        g.setColor(new Color(0, 0, 0, 50));
+        g.fillRoundRect(x + 6, y + 6, LEVEL_CARD_W, LEVEL_CARD_H, 30, 30);
+        g.setColor(new Color(0, 0, 0, 30));
+        g.fillRoundRect(x + 3, y + 3, LEVEL_CARD_W, LEVEL_CARD_H, 30, 30);
 
-        g.setColor(unlocked ? new Color(224, 238, 180) : new Color(175, 175, 175));
-        g.fillRoundRect(x + 28, y + 56, LEVEL_CARD_W - 56, 120, 18, 18);
-        g.setColor(unlocked ? new Color(124, 181, 78) : new Color(120, 120, 120));
-        g.fillRoundRect(x + 40, y + 68, LEVEL_CARD_W - 80, 96, 14, 14);
+        // 外框渐变
+        Color outerStart = unlocked ? new Color(142, 96, 44) : new Color(115, 115, 115);
+        Color outerEnd = unlocked ? new Color(92, 56, 24) : new Color(75, 75, 75);
+        GradientPaint outerGrad = new GradientPaint(x, y, outerStart, x, y + LEVEL_CARD_H, outerEnd);
+        g.setPaint(outerGrad);
+        g.fillRoundRect(x, y, LEVEL_CARD_W, LEVEL_CARD_H, 30, 30);
 
-        g.setColor(new Color(255, 248, 220));
-        g.setFont(new Font("SansSerif", Font.BOLD, 26));
-        g.drawString("第" + level + "关", x + 68, y + 42);
-        g.setFont(new Font("SansSerif", Font.BOLD, 22));
-        g.drawString(title, x + 54, y + 215);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        g.drawString(desc, x + 64, y + 246);
+        // 内框渐变
+        Color innerStart = unlocked ? new Color(207, 161, 102) : new Color(166, 166, 166);
+        Color innerEnd = unlocked ? new Color(167, 121, 62) : new Color(126, 126, 126);
+        GradientPaint innerGrad = new GradientPaint(x + 12, y + 12, innerStart, x + LEVEL_CARD_W - 12, y + LEVEL_CARD_H - 12, innerEnd);
+        g.setPaint(innerGrad);
+        g.fillRoundRect(x + 12, y + 12, LEVEL_CARD_W - 24, LEVEL_CARD_H - 24, 24, 24);
+
+        // 预览区域背景（中层）
+        Color previewBg = unlocked ? new Color(235, 245, 200) : new Color(195, 195, 195);
+        g.setColor(previewBg);
+        g.fillRoundRect(x + 28, y + 56, LEVEL_CARD_W - 56, 120, 20, 20);
+        g.setColor(new Color(0, 0, 0, 30));
+        g.drawRoundRect(x + 28, y + 56, LEVEL_CARD_W - 56, 120, 20, 20);
+
+        // 内部小窗
+        Color innerPreview = unlocked ? new Color(144, 201, 98) : new Color(140, 140, 140);
+        g.setColor(innerPreview);
+        g.fillRoundRect(x + 40, y + 68, LEVEL_CARD_W - 80, 96, 16, 16);
+        g.setColor(new Color(255, 255, 200, 80));
+        g.drawRoundRect(x + 40, y + 68, LEVEL_CARD_W - 80, 96, 16, 16);
+
+        // 标题文字（带阴影）
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 26));
+        String levelText = "第" + level + "关";
+        drawTextWithShadow(g, levelText, x + 68, y + 42, new Color(255, 248, 220), new Color(60, 40, 20));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 22));
+        drawTextWithShadow(g, title, x + 54, y + 215, new Color(255, 248, 220), new Color(60, 40, 20));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 16));
+        drawTextWithShadow(g, desc, x + 64, y + 246, new Color(255, 248, 220), new Color(60, 40, 20));
 
         if (!unlocked) {
-            g.setColor(new Color(0, 0, 0, 88));
-            g.fillRoundRect(x + 12, y + 12, LEVEL_CARD_W - 24, LEVEL_CARD_H - 24, 22, 22);
+            g.setColor(new Color(0, 0, 0, 100));
+            g.fillRoundRect(x + 12, y + 12, LEVEL_CARD_W - 24, LEVEL_CARD_H - 24, 24, 24);
             drawLockIcon(g, x + LEVEL_CARD_W / 2 - 26, y + 95);
         } else {
-            g.setColor(new Color(255, 249, 210));
-            g.fillRoundRect(x + 58, y + 95, 104, 34, 16, 16);
-            g.setColor(new Color(87, 118, 44));
-            g.setFont(new Font("SansSerif", Font.BOLD, 18));
-            g.drawString("可进入", x + 84, y + 118);
+            drawStyledButton(g, x + 58, y + 95, 104, 34, new Color(107, 148, 54), "点击进入");
         }
     }
 
@@ -410,9 +536,9 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(156, 89, 38));
         g.fillRoundRect(PREP_PANEL_X + 10, PREP_PANEL_Y + 10, PREP_PANEL_W - 20, PREP_PANEL_H - 20, 20, 20);
         g.setColor(new Color(244, 214, 112));
-        g.setFont(new Font("Serif", Font.BOLD, 34));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 34));
         g.drawString("选择你的植物", 92, 178);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 18));
         g.drawString("先整理出战阵容，再正式开战。", 78, 210);
 
         for (int i = 0; i < selectablePlants.length; i++) {
@@ -423,16 +549,16 @@ public class GameBoard extends ElementObj {
             g.fillRoundRect(x, y, 118, 62, 16, 16);
             g.setColor(selected ? new Color(124, 82, 24) : new Color(108, 75, 36));
             g.drawRoundRect(x, y, 118, 62, 16, 16);
-            g.setFont(new Font("SansSerif", Font.BOLD, 18));
+            g.setFont(new Font("Microsoft YaHei", Font.BOLD, 18));
             g.drawString(selectablePlants[i], x + 14, y + 28);
-            g.setFont(new Font("SansSerif", Font.PLAIN, 13));
+            g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 13));
             g.drawString(i < 2 ? "可用" : "展示中", x + 14, y + 48);
         }
 
         g.setColor(new Color(255, 245, 220));
-        g.setFont(new Font("SansSerif", Font.BOLD, 18));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 18));
         g.drawString("当前默认携带：豌豆射手、向日葵", 68, 520);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 16));
         g.drawString("先看看门前公路上的僵尸，再准备布阵。", 72, 548);
 
         drawButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
@@ -450,7 +576,7 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawPreviewZombie(Graphics2D g, int x, int y, ZombiePreviewType type, String label) {
-        java.awt.image.BufferedImage img = GameImage.get("images/zombies/basic_zombie.png");
+        BufferedImage img = GameImage.get("images/zombies/basic_zombie.png");
         if (img != null) {
             GameImage.draw(g, img, x, y, 62, 98);
         } else {
@@ -475,7 +601,7 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(62, 44, 18, 220));
         g.fillRoundRect(x - 6, y + 92, 86, 26, 12, 12);
         g.setColor(new Color(255, 244, 208));
-        g.setFont(new Font("SansSerif", Font.BOLD, 13));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 13));
         g.drawString(label, x + 6, y + 110);
     }
 
@@ -521,7 +647,7 @@ public class GameBoard extends ElementObj {
         g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
 
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.BOLD, 34));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 34));
         g.drawString("游戏菜单", 560, 210);
 
         drawButton(g, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W, PAUSE_CONTINUE_BTN_H,
@@ -539,10 +665,10 @@ public class GameBoard extends ElementObj {
         g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
 
         g.setColor(new Color(241, 196, 15));
-        g.setFont(new Font("SansSerif", Font.BOLD, 44));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 44));
         g.drawString("YOU WIN", 510, 300);
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 20));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 20));
         g.drawString("你已经击败了全部 20 只普通僵尸！", 470, 340);
 
         drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
@@ -556,10 +682,10 @@ public class GameBoard extends ElementObj {
         g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
 
         g.setColor(new Color(231, 76, 60));
-        g.setFont(new Font("SansSerif", Font.BOLD, 44));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 44));
         g.drawString("GAME OVER", 475, 300);
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 18));
         g.drawString("僵尸走到了最左边，你的草坪被攻破啦", 460, 340);
 
         drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
@@ -574,7 +700,7 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(255, 255, 255, 220));
         g.drawRoundRect(x, y, w, h, 24, 24);
         g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.BOLD, h >= 50 ? 24 : 18));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, h >= 50 ? 24 : 18));
 
         FontMetrics metrics = g.getFontMetrics();
         int textX = x + (w - metrics.stringWidth(text)) / 2;

@@ -171,6 +171,8 @@ public class GameLoad {
             waterMan.createElement("64,448");
             em.addElement(waterMan, GameElement.WATER_MAN);
         }
+        // 显示控制提示（持续5秒）
+        em.showTip("冰仔移动：↑（上）、←（左）、→（右）\n火仔移动：W（上）、A（左）、D（右）", 192, 472, 5000);
     }
 
     // ========== 普通模式（植物大战僵尸）原有加载逻辑 ==========

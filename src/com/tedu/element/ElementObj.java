@@ -239,7 +239,7 @@ public abstract class ElementObj {
                 }
                 // 未集齐钻石且门未开，显示提示
                 if (!hasAllDiamonds()) {
-                    em.showTip("必须收集满三个钻石才能开门哦", 2000);
+                    em.showTip("必须收集满三个精魄才能开门哦", 192, 64, 3000);
                     return;
                 }
                 // 集齐钻石且门未开，执行开门

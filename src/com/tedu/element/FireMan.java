@@ -13,15 +13,36 @@ public class FireMan extends ElementObj {
 
     @Override
     public void keyClick(boolean pressed, int keyCode) {
-        switch (keyCode) {
-            case 65: left = pressed; break;
-            case 68: right = pressed; break;
-            case 87:
-                if (pressed && isOnGround) {
-                    vy = JUMP_VELOCITY;
-                    isOnGround = false;
-                }
-                break;
+        if (pressed) {
+            switch (keyCode) {
+                case 65:
+                    left = pressed;
+                    break;
+                case 68:
+                    right = pressed;
+                    break;
+                case 87:
+                    if (isOnGround) {
+                        vy = JUMP_VELOCITY;
+                        isOnGround = false;
+                    }
+                    break;
+            }
+            // 检测第一次移动（全局只触发一次）
+            if (keyCode == 65 || keyCode == 68 || keyCode == 87) {
+                em.showFirstMoveTip("注意：冰仔不能靠近火地，火仔不能落入冰面哦！\n别忘了收集冰之精魄和火之精魄", 388, 500, 5000);
+            }
+        } else {
+            switch (keyCode) {
+                case 65:
+                    left = pressed;
+                    break;
+                case 68:
+                    right = pressed;
+                    break;
+                case 87:
+                    break;
+            }
         }
     }
 
@@ -43,6 +64,11 @@ public class FireMan extends ElementObj {
         checkOpenDoor();
         checkDeathByTerrain();
         checkTrapDeath();
+
+        // 检测是否到达危险区域（x>832, y<256）（全局只触发一次）
+        if (getX() > 832 && getY() < 256) {
+            em.showTrapTip("小心毒液！冰仔和火仔落入毒液都会死亡", 896, 128, 5000);
+        }
     }
 
     @Override
@@ -61,15 +87,32 @@ public class FireMan extends ElementObj {
     }
 
     @Override
-    protected int getSpawnX() { return 64; }
+    protected int getSpawnX() {
+        return 64;
+    }
+
     @Override
-    protected int getSpawnY() { return 544; }
+    protected int getSpawnY() {
+        return 544;
+    }
+
     @Override
-    protected String getDiamondRoleType() { return "fire_diamond"; }
+    protected String getDiamondRoleType() {
+        return "fire_diamond";
+    }
+
     @Override
-    protected String getDoorRoleType() { return "fire_door"; }
+    protected String getDoorRoleType() {
+        return "fire_door";
+    }
+
     @Override
-    protected String getDeathTerrainRoleType() { return "water_terrain"; }
+    protected String getDeathTerrainRoleType() {
+        return "water_terrain";
+    }
+
     @Override
-    protected int getRequiredDiamondCount() { return 3; }
+    protected int getRequiredDiamondCount() {
+        return 3;
+    }
 }

@@ -10,6 +10,7 @@ src/com/tedu/element/GameBoard.java
 src/com/tedu/element/GameInfoPanel.java
 src/com/tedu/element/GridCell.java
 src/com/tedu/element/PeaShooter.java
+src/com/tedu/element/PeaBulletSprite.java
 src/com/tedu/element/Plant.java
 src/com/tedu/element/Sun.java
 src/com/tedu/element/Sunflower.java

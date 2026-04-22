@@ -10,6 +10,7 @@ com/tedu/element/GameBoard.java
 com/tedu/element/GameInfoPanel.java
 com/tedu/element/GridCell.java
 com/tedu/element/PeaShooter.java
+com/tedu/element/PeaBulletSprite.java
 com/tedu/element/Plant.java
 com/tedu/element/Zombie.java
 com/tedu/element/Sun.java

@@ -10,12 +10,13 @@ import java.awt.Graphics;
 import com.tedu.show.GameJFrame;
 
 public class Bullet extends ElementObj {
+    private static final int SPEED = 6;
+    private static final int DAMAGE = 1;
+
     private final int row;
-    private final int speed = 6;
-    private final int damage = 1;
 
     public Bullet(int row, int x, int y) {
-        super(x, y, 12, 12, null);
+        super(x, y, 18, 16, null);
         this.row = row;
     }
 
@@ -23,18 +24,21 @@ public class Bullet extends ElementObj {
     public void showElement(Graphics g) {
         GameBoard board = GameBoard.getInstance();
         int drawX = board == null ? getX() : board.toScreenX(getX());
+        if (PeaBulletSprite.draw(g, drawX, getY(), getW(), getH())) {
+            return;
+        }
         g.setColor(new Color(55, 218, 48));
         g.fillOval(drawX, getY(), getW(), getH());
     }
 
     @Override
     protected void move() {
-        setX(getX() + speed);
+        setX(getX() + SPEED);
         if (getX() > GameJFrame.GameX) {
             setLive(false);
         }
     }
 
-    public int getDamage() { return damage; }
+    public int getDamage() { return DAMAGE; }
     public int getRow() { return row; }
 }

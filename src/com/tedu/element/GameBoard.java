@@ -1,35 +1,26 @@
 package com.tedu.element;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.awt.image.BufferedImage;
-
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 import com.tedu.util.GameImage;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.util.List;
+import java.util.Random;
+import javax.imageio.ImageIO;
 
 /**
  * GameBoard：游戏主战场背景与状态中心。
  *
- * 本次升级：
- * 1. 首页按钮重新对齐；
- * 2. 首页左侧加入“森林冰火小人”故事背景；
- * 3. 点击开始后先进入选卡/预览流程，并做一个向右平移的镜头；
- * 4. 战斗地图加大，房前增加公路；
- * 5. 顶部功能栏改成双排布局，为后续扩展留出空间。
+ * 本次升级： 1. 首页按钮重新对齐； 2. 首页左侧加入“森林冰火小人”故事背景； 3. 点击开始后先进入选卡/预览流程，并做一个向右平移的镜头； 4.
+ * 战斗地图加大，房前增加公路； 5. 顶部功能栏改成双排布局，为后续扩展留出空间。
  */
 public class GameBoard extends ElementObj {
-    private static GameBoard instance;
 
+    private static GameBoard instance;
+    private BufferedImage backgroundImage;  // 主菜单背景图片
     private static final int WINDOW_W = 1280;
     private static final int WINDOW_H = 720;
 
@@ -72,9 +63,9 @@ public class GameBoard extends ElementObj {
 
     private static final int HOME_BUTTON_W = 220;
     private static final int HOME_BUTTON_H = 58;
-    private static final int HOME_BUTTON_X = 865;
-    private static final int HOME_START_BTN_Y = 285;
-    private static final int HOME_EXIT_BTN_Y = 360;
+    private static final int HOME_BUTTON_X = 530;
+    private static final int HOME_START_BTN_Y = 430;
+    private static final int HOME_EXIT_BTN_Y = 510;
 
     private static final int LEVEL_CARD_W = 220;
     private static final int LEVEL_CARD_H = 280;
@@ -199,6 +190,17 @@ public class GameBoard extends ElementObj {
         SUNFLOWER
     }
 
+    private void loadBackgroundImage() {
+        try {
+
+            backgroundImage = ImageIO.read(new File("assets/images/background/Mini World Adventure.png"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            // 如果图片加载失败，背景保持原有绘制（或默认色）
+            backgroundImage = null;
+        }
+    }
+
     public enum GameStage {
         HOME,
         LEVEL_SELECT,
@@ -260,43 +262,112 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.PLAIN, 15));
         g.drawString("Move: WASD / Arrow keys    Shoot: Space    Pause: P or Esc", 34, 62);
     }
+    //主页加载
 
     private void drawHomeScene(Graphics2D g) {
-        g.setColor(new Color(168, 219, 247));
-        g.fillRect(0, 0, getW(), 410);
-        g.setColor(new Color(196, 227, 145));
-        g.fillRect(0, 410, getW(), 310);
+        // 开启抗锯齿
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        loadBackgroundImage();
+        // 1. 绘制背景图片（如果加载成功）
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getW(), getH(), null);
+        } else {
+            // 回退方案：简单填充颜色（防止空屏）
+            g.setColor(new Color(30, 40, 30));
+            g.fillRect(0, 0, getW(), getH());
+        }
 
-        g.setColor(new Color(255, 244, 170));
-        g.fillOval(80, 55, 120, 120);
-        g.setColor(new Color(140, 208, 92));
-        g.fillOval(-60, 390, 620, 250);
-        g.fillOval(320, 430, 980, 290);
+        int panelX = 480;
+        int panelY = 300;
+        int panelW = 320;
+        int panelH = 300;
 
-        drawHouse(g, 145, 255, 1.2);
-
-        g.setColor(new Color(255, 255, 255, 228));
-        g.setFont(new Font("Serif", Font.BOLD, 44));
-        g.drawString("欢迎来到森林边缘的草坪", 76, 210);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 24));
-        g.drawString("冰火小人的家受到了僵尸的进攻。", 82, 265);
-        g.drawString("他们请来了老朋友植物们，一起守住这条通往家门前的道路。", 82, 307);
-        g.drawString("整理好植物阵容后，就出发迎战吧！", 82, 349);
-
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.85f));
         g.setColor(new Color(118, 82, 53));
-        g.fillRoundRect(790, 145, 320, 350, 34, 34);
-        g.setColor(new Color(150, 121, 94));
-        g.fillRoundRect(812, 167, 276, 306, 28, 28);
-        g.setColor(new Color(68, 43, 27));
-        g.setFont(new Font("Serif", Font.BOLD, 34));
-        g.drawString("植物大战僵尸", 855, 215);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 18));
-        g.drawString("森林冰火小人版 Mini Demo", 855, 252);
+        g.fillRoundRect(panelX, panelY, panelW, panelH, 34, 34);
+        g.setColor(new Color(150, 121, 94, 220));
+        g.fillRoundRect(panelX + 22, panelY + 22, panelW - 44, panelH - 44, 28, 28);
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
+        g.setColor(new Color(255, 255, 200, 60));
+        g.drawRoundRect(panelX + 22, panelY + 22, panelW - 44, panelH - 44, 28, 28);
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 34));
+        drawTextWithShadow(g, "植物大战僵尸", 545, 370, new Color(255, 235, 180), new Color(50, 30, 15));
+        g.setFont(new Font("Microsoft YaHei", Font.ITALIC, 18));
+        drawTextWithShadow(g, "森林冰火小人版 Mini Demo", 525, 400, new Color(230, 210, 150), new Color(50, 30, 15));
+        // 3. 欢迎文字（保留原有位置和内容）
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 34));
+        drawTextWithShadow(g, "欢迎来到森林边缘的草坪", 820, 600, new Color(255, 255, 240), new Color(80, 60, 30));
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 14));
+        drawTextWithShadow(g, "冰火小人的家受到了僵尸的进攻。", 830, 640, new Color(255, 255, 240), new Color(80, 60, 30));
+        drawTextWithShadow(g, "他们请来了老朋友植物们，一起守住这条通往家门前的道路。", 830, 670, new Color(255, 255, 240), new Color(80, 60, 30));
+        drawTextWithShadow(g, "整理好植物阵容后，就出发迎战吧！", 830, 700, new Color(255, 255, 240), new Color(80, 60, 30));
 
-        drawButton(g, HOME_BUTTON_X, HOME_START_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
-                new Color(83, 160, 56), "开始游戏");
-        drawButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
-                new Color(118, 118, 118), "退出游戏");
+        int btnX = 530;
+        int startBtnY = 420;
+        int exitBtnY = 495;
+
+// 开始按钮（带阴影，无白色描边）
+        g.setColor(new Color(0, 0, 0, 60));
+        g.fillRoundRect(btnX + 3, startBtnY + 3, HOME_BUTTON_W, HOME_BUTTON_H, 24, 24);
+        g.setColor(new Color(0, 0, 0, 30));
+        g.fillRoundRect(btnX + 5, startBtnY + 5, HOME_BUTTON_W, HOME_BUTTON_H, 24, 24);
+        GradientPaint grad1 = new GradientPaint(btnX, startBtnY, new Color(83, 160, 56).brighter(),
+                btnX, startBtnY + HOME_BUTTON_H, new Color(83, 160, 56).darker());
+        g.setPaint(grad1);
+        g.fillRoundRect(btnX, startBtnY, HOME_BUTTON_W, HOME_BUTTON_H, 24, 24);
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 20));
+        FontMetrics fm = g.getFontMetrics();
+        int textX = btnX + (HOME_BUTTON_W - fm.stringWidth("开始游戏")) / 2;
+        int textY = startBtnY + (HOME_BUTTON_H + fm.getAscent()) / 2 - 2;
+        g.drawString("开始游戏", textX, textY);
+
+// 退出按钮（带阴影，无白色描边）
+        g.setColor(new Color(0, 0, 0, 60));
+        g.fillRoundRect(btnX + 3, exitBtnY + 3, HOME_BUTTON_W, HOME_BUTTON_H, 24, 24);
+        g.setColor(new Color(0, 0, 0, 30));
+        g.fillRoundRect(btnX + 5, exitBtnY + 5, HOME_BUTTON_W, HOME_BUTTON_H, 24, 24);
+        GradientPaint grad2 = new GradientPaint(btnX, exitBtnY, new Color(118, 118, 118).brighter(),
+                btnX, exitBtnY + HOME_BUTTON_H, new Color(118, 118, 118).darker());
+        g.setPaint(grad2);
+        g.fillRoundRect(btnX, exitBtnY, HOME_BUTTON_W, HOME_BUTTON_H, 24, 24);
+        g.setColor(Color.WHITE);
+        textX = btnX + (HOME_BUTTON_W - fm.stringWidth("退出游戏")) / 2;
+        textY = exitBtnY + (HOME_BUTTON_H + fm.getAscent()) / 2 - 2;
+        g.drawString("退出游戏", textX, textY);
+
+    }
+
+    // 辅助方法：绘制带阴影的文字
+    private void drawTextWithShadow(Graphics2D g, String text, int x, int y, Color textColor, Color shadowColor) {
+        g.setColor(shadowColor);
+        g.drawString(text, x + 2, y + 2);
+        g.setColor(textColor);
+        g.drawString(text, x, y);
+    }
+
+    // 辅助方法：绘制渐变按钮 (保持原有按钮坐标，仅增强视觉)
+    private void drawFancyButton(Graphics2D g, int x, int y, int w, int h, Color baseColor, String label) {
+        // 阴影
+        g.setColor(new Color(0, 0, 0, 80));
+        g.fillRoundRect(x + 3, y + 3, w, h, 20, 20);
+        // 渐变背景
+        GradientPaint grad = new GradientPaint(x, y, baseColor.brighter(), x, y + h, baseColor.darker());
+        g.setPaint(grad);
+        g.fillRoundRect(x, y, w, h, 20, 20);
+        // 边框高亮
+        g.setColor(Color.WHITE);
+        g.drawRoundRect(x, y, w, h, 20, 20);
+        g.setColor(new Color(255, 255, 200, 120));
+        g.drawRoundRect(x + 1, y + 1, w - 2, h - 2, 18, 18);
+        // 文字
+        g.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        g.setColor(Color.WHITE);
+        FontMetrics fm = g.getFontMetrics();
+        int textX = x + (w - fm.stringWidth(label)) / 2;
+        int textY = y + (h + fm.getAscent()) / 2 - 2;
+        g.drawString(label, textX, textY);
     }
 
     private void drawLevelSelectScene(Graphics2D g) {
@@ -631,7 +702,6 @@ public class GameBoard extends ElementObj {
         }
     }
 
-
     private void updateContraMode(long gameTime) {
         if (contraPlayer != null && contraPlayer.isLive()) {
             updateContraCameraFor(contraPlayer.getX());
@@ -645,6 +715,7 @@ public class GameBoard extends ElementObj {
             }
         }
     }
+
     @Override
     public void mouseClick(int mouseX, int mouseY) {
         if (stage == GameStage.HOME) {
@@ -805,7 +876,6 @@ public class GameBoard extends ElementObj {
         spawnedZombies++;
     }
 
-
     private void spawnGunZombie() {
         int[] lanes = {CONTRA_GROUND_Y - 82, CONTRA_GROUND_Y - 170, CONTRA_GROUND_Y - 260};
         int laneIndex = random.nextInt(lanes.length);
@@ -813,6 +883,7 @@ public class GameBoard extends ElementObj {
         ElementManager.getManager().addElement(new GunZombie(spawnX, lanes[laneIndex]), GameElement.ZOMBIE);
         spawnedZombies++;
     }
+
     private void spawnSkySun() {
         int col = random.nextInt(cols);
         int x = getCellX(col) + (cellW - 36) / 2;
@@ -1089,20 +1160,61 @@ public class GameBoard extends ElementObj {
         }
     }
 
-    public boolean isGameStarted() { return gameStarted; }
-    public boolean isGameOver() { return gameOver; }
-    public boolean isGameWin() { return gameWin; }
-    public boolean isShovelMode() { return shovelMode; }
-    public boolean isPaused() { return paused; }
-    public boolean isInBattleStage() { return stage == GameStage.PLAYING; }
-    public int getSpawnedZombies() { return spawnedZombies; }
-    public int getMaxZombies() { return selectedLevel == 3 ? 14 : MAX_ZOMBIES; }
-    public int getCurrentSun() { return currentSun; }
-    public int getPeaShooterCost() { return PEA_SHOOTER_COST; }
-    public int getSunflowerCost() { return SUNFLOWER_COST; }
-    public PlantType getSelectedPlantType() { return selectedPlantType; }
-    public int getSelectedPlantCost() { return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST; }
-    public void addSun(int sun) { currentSun += sun; }
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public boolean isGameWin() {
+        return gameWin;
+    }
+
+    public boolean isShovelMode() {
+        return shovelMode;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public boolean isInBattleStage() {
+        return stage == GameStage.PLAYING;
+    }
+
+    public int getSpawnedZombies() {
+        return spawnedZombies;
+    }
+
+    public int getMaxZombies() {
+        return selectedLevel == 3 ? 14 : MAX_ZOMBIES;
+    }
+
+    public int getCurrentSun() {
+        return currentSun;
+    }
+
+    public int getPeaShooterCost() {
+        return PEA_SHOOTER_COST;
+    }
+
+    public int getSunflowerCost() {
+        return SUNFLOWER_COST;
+    }
+
+    public PlantType getSelectedPlantType() {
+        return selectedPlantType;
+    }
+
+    public int getSelectedPlantCost() {
+        return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST;
+    }
+
+    public void addSun(int sun) {
+        currentSun += sun;
+    }
 
     public Plant getPlant(int row, int col) {
         if (!isValidCell(row, col)) {
@@ -1183,7 +1295,6 @@ public class GameBoard extends ElementObj {
         return row >= 0 && row < rows && col >= 0 && col < cols;
     }
 
-
     public int getLawnLeftEdgeX() {
         return BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.105);
     }
@@ -1194,11 +1305,11 @@ public class GameBoard extends ElementObj {
 
     public int getHouseDoorTargetY(int row) {
         int[] laneTargets = {
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
         };
         if (row < 0) {
             row = 0;
@@ -1208,29 +1319,93 @@ public class GameBoard extends ElementObj {
         return laneTargets[row];
     }
 
-    public int getRows() { return rows; }
-    public int getCols() { return cols; }
-    public int getCellW() { return cellW; }
-    public int getCellH() { return cellH; }
-    public int getStatusBarX() { return STATUS_BAR_X; }
-    public int getStatusBarY() { return STATUS_BAR_Y; }
-    public int getStatusBarW() { return STATUS_BAR_W; }
-    public int getStatusBarH() { return STATUS_BAR_H; }
-    public int getPeaCardX() { return PEA_CARD_X; }
-    public int getPeaCardY() { return PEA_CARD_Y; }
-    public int getSunflowerCardX() { return SUNFLOWER_CARD_X; }
-    public int getSunflowerCardY() { return SUNFLOWER_CARD_Y; }
-    public int getPlantCardW() { return CARD_W; }
-    public int getPlantCardH() { return CARD_H; }
-    public int getShovelButtonX() { return SHOVEL_BTN_X; }
-    public int getShovelButtonY() { return SHOVEL_BTN_Y; }
-    public int getShovelButtonW() { return SHOVEL_BTN_W; }
-    public int getShovelButtonH() { return SHOVEL_BTN_H; }
-    public int getMenuButtonX() { return MENU_BTN_X; }
-    public int getMenuButtonY() { return MENU_BTN_Y; }
-    public int getMenuButtonW() { return MENU_BTN_W; }
-    public int getMenuButtonH() { return MENU_BTN_H; }
+    public int getRows() {
+        return rows;
+    }
 
+    public int getCols() {
+        return cols;
+    }
+
+    public int getCellW() {
+        return cellW;
+    }
+
+    public int getCellH() {
+        return cellH;
+    }
+
+    public int getStatusBarX() {
+        return STATUS_BAR_X;
+    }
+
+    public int getStatusBarY() {
+        return STATUS_BAR_Y;
+    }
+
+    public int getStatusBarW() {
+        return STATUS_BAR_W;
+    }
+
+    public int getStatusBarH() {
+        return STATUS_BAR_H;
+    }
+
+    public int getPeaCardX() {
+        return PEA_CARD_X;
+    }
+
+    public int getPeaCardY() {
+        return PEA_CARD_Y;
+    }
+
+    public int getSunflowerCardX() {
+        return SUNFLOWER_CARD_X;
+    }
+
+    public int getSunflowerCardY() {
+        return SUNFLOWER_CARD_Y;
+    }
+
+    public int getPlantCardW() {
+        return CARD_W;
+    }
+
+    public int getPlantCardH() {
+        return CARD_H;
+    }
+
+    public int getShovelButtonX() {
+        return SHOVEL_BTN_X;
+    }
+
+    public int getShovelButtonY() {
+        return SHOVEL_BTN_Y;
+    }
+
+    public int getShovelButtonW() {
+        return SHOVEL_BTN_W;
+    }
+
+    public int getShovelButtonH() {
+        return SHOVEL_BTN_H;
+    }
+
+    public int getMenuButtonX() {
+        return MENU_BTN_X;
+    }
+
+    public int getMenuButtonY() {
+        return MENU_BTN_Y;
+    }
+
+    public int getMenuButtonW() {
+        return MENU_BTN_W;
+    }
+
+    public int getMenuButtonH() {
+        return MENU_BTN_H;
+    }
 
     public int getSceneCameraOffset() {
         if (isContraMode()) {

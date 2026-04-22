@@ -17,8 +17,6 @@ import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 import com.tedu.util.GameImage;
 
-import com.tedu.manager.GameLoad;
-
 /**
  * GameBoard：游戏主战场背景与状态中心。
  *
@@ -114,10 +112,6 @@ public class GameBoard extends ElementObj {
     private static final int HOME_BTN_Y = 420;
     private static final int HOME_BTN_W = 190;
     private static final int HOME_BTN_H = 60;
-    private static final int NEXT_BTN_X = 545; // 下一关按钮位置
-    private static final int NEXT_BTN_Y = 500;
-    private static final int NEXT_BTN_W = 190;
-    private static final int NEXT_BTN_H = 60;
 
     private static final int PREP_PANEL_X = 40;
     private static final int PREP_PANEL_Y = 130;

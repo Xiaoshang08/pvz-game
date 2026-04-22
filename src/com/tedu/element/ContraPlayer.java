@@ -12,9 +12,9 @@ import com.tedu.util.GameImage;
 public class ContraPlayer extends ElementObj {
     private static final String IMAGE_PATH = "images/plants/pea_shooter.png";
     private static final BufferedImage IMAGE = GameImage.get(IMAGE_PATH);
-    private static final int SPEED = 7;
-    private static final double GRAVITY = 0.72;
-    private static final double JUMP_SPEED = -15.0;
+    private static final int SPEED = 8;
+    private static final double GRAVITY = 0.68;
+    private static final double JUMP_SPEED = -16.5;
     private static final double MAX_FALL_SPEED = 15.0;
     private static final int DROP_IGNORE_HEIGHT = 18;
     private static final int MAX_JUMPS = 2;

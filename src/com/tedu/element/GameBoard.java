@@ -829,8 +829,15 @@ public class GameBoard extends ElementObj {
             String tip = ElementManager.getManager().getTipMessage();
             if (tip != null) {
                 g.setColor(Color.BLACK);
-                g.setFont(new Font("微软雅黑", Font.BOLD, 24));
-                g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
+                g.setFont(new Font("微软雅黑", Font.BOLD, 16));
+                int tipX = ElementManager.getManager().getTipX();
+                int tipY = ElementManager.getManager().getTipY();
+                // 多行文本处理
+                String[] lines = tip.split("\n");
+                // 指定位置显示
+                for (int i = 0; i < lines.length; i++) {
+                    g.drawString(lines[i], tipX, tipY + i * 32);
+                }
             }
             // 绘制菜单按钮（右上角，冰火人模式最上层）
             drawStyledButton((Graphics2D) g, MENU_BTN_X, MENU_BTN_Y, MENU_BTN_W, MENU_BTN_H,
@@ -1402,6 +1409,7 @@ public class GameBoard extends ElementObj {
             introCameraOffset = 0;
             battleIntroPlaying = false;
             GameLoad.MapLoad(1);
+            ElementManager.getManager().resetTipFlags();
             GameLoad.loadFireWaterMan();
         } else if (selectedLevel == 3) {
             currentSun = 0;

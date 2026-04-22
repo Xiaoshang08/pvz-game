@@ -52,16 +52,54 @@ public class ElementManager {
     // 提示消息相关
     private String tipMessage = null;
     private long tipExpireTime = 0;
+    private int tipX = 0;
+    private int tipY = 0;
+
+    // 一次性提示标志（触发后不再重复显示）
+    private boolean firstMoveTipShown = false;
+    private boolean trapTipShown = false;
 
     /**
-     * 显示一条临时提示消息（在屏幕上停留 durationMs 毫秒）
+     * 在指定位置显示一条临时提示消息
      * 
      * @param msg        提示内容
+     * @param x          显示x坐标，-1表示居中
+     * @param y          显示y坐标
      * @param durationMs 持续时间（毫秒）
      */
-    public void showTip(String msg, int durationMs) {
+    public void showTip(String msg, int x, int y, int durationMs) {
         this.tipMessage = msg;
+        this.tipX = x;
+        this.tipY = y;
         this.tipExpireTime = System.currentTimeMillis() + durationMs;
+    }
+
+    /**
+     * 显示第一次移动的提示（只显示一次）
+     */
+    public void showFirstMoveTip(String msg, int x, int y, int durationMs) {
+        if (!firstMoveTipShown) {
+            firstMoveTipShown = true;
+            showTip(msg, x, y, durationMs);
+        }
+    }
+
+    /**
+     * 显示毒液区域警告（只显示一次）
+     */
+    public void showTrapTip(String msg, int x, int y, int durationMs) {
+        if (!trapTipShown) {
+            trapTipShown = true;
+            showTip(msg, x, y, durationMs);
+        }
+    }
+
+    /**
+     * 重置一次性提示标志（游戏重新开始时调用）
+     */
+    public void resetTipFlags() {
+        firstMoveTipShown = false;
+        trapTipShown = false;
     }
 
     /**
@@ -75,5 +113,19 @@ public class ElementManager {
         }
         tipMessage = null;
         return null;
+    }
+
+    /**
+     * 获取提示消息的x坐标
+     */
+    public int getTipX() {
+        return tipX;
+    }
+
+    /**
+     * 获取提示消息的y坐标
+     */
+    public int getTipY() {
+        return tipY;
     }
 }

@@ -131,12 +131,12 @@ public class GameInfoPanel extends ElementObj {
         g2.drawString("HP: " + board.getContraPlayerHealth(), x + 220, y + 29);
 
         g2.setColor(new Color(150, 226, 117));
-        g2.drawString("Kills: " + board.getTotalKills() + " / " + board.getMaxZombies(), x + 340, y + 29);
+        g2.drawString("Boss: " + (board.isContraBossDefeated() ? "Defeated" : "Hong Yuexian"), x + 340, y + 29);
         g2.drawString("A/D move    W double jump    S drop    Space shoot    P/Esc pause", x + 520, y + 29);
 
         g2.setFont(new Font("Consolas", Font.PLAIN, 13));
         g2.setColor(new Color(200, 240, 180));
-        g2.drawString("Defeat every zombie, avoid water, then enter the blue base passage.", x + 24, y + 56);
+        g2.drawString("Defeat Hong Yuexian, avoid hazards, then enter the blue base passage.", x + 24, y + 56);
     }
 
     private String getSelectedPlantLabel(GameBoard board) {

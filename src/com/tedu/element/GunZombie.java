@@ -12,12 +12,19 @@ public class GunZombie extends ElementObj {
     private static final int DETECT_RANGE = 640;
     private static final double BULLET_SPEED = 8.0;
     private static final int SHOOT_INTERVAL = 42;
-    private int health = 4;
+    protected int health = 4;
+    private final int maxHealth;
     private int shootCounter;
     private double verticalSpeed;
 
     public GunZombie(int x, int y) {
-        super(x, y, 56, 82, null);
+        this(x, y, 56, 82, 4);
+    }
+
+    protected GunZombie(int x, int y, int w, int h, int health) {
+        super(x, y, w, h, null);
+        this.health = health;
+        this.maxHealth = health;
         shootCounter = 15;
     }
 
@@ -59,7 +66,9 @@ public class GunZombie extends ElementObj {
         g.fillRect(x + 58, y + 50, 10, 9);
 
         g.setColor(new Color(202, 65, 52));
-        g.fillRect(x + 8, y - 10, Math.max(0, health) * 10, 4);
+        int hpBarW = 42;
+        int hp = Math.max(0, health) * hpBarW / Math.max(1, maxHealth);
+        g.fillRect(x + 8, y - 10, hp, 4);
     }
 
     @Override
@@ -96,7 +105,7 @@ public class GunZombie extends ElementObj {
         double length = Math.max(1.0, Math.sqrt(dx * dx + dy * dy));
         double vx = dx / length * BULLET_SPEED;
         double vy = dy / length * BULLET_SPEED;
-        ElementManager.getManager().addElement(new EnemyBullet((int) startX, (int) startY, vx, vy), GameElement.ENEMY_BULLET);
+        ElementManager.getManager().addElement(new EnemyBullet((int) startX, (int) startY, vx, vy, getBulletDamage()), GameElement.ENEMY_BULLET);
     }
 
     private void applyContraGravity(GameBoard board) {
@@ -136,5 +145,17 @@ public class GunZombie extends ElementObj {
                 board.addKill();
             }
         }
+    }
+
+    public int getBulletDamage() {
+        return 1;
+    }
+
+    public int getContactDamage() {
+        return 2;
+    }
+
+    protected int getMaxHealth() {
+        return maxHealth;
     }
 }

@@ -261,14 +261,6 @@ public class GameBoard extends ElementObj {
         drawByType(all, GameElement.TRAP_TERRAIN, g);
         drawByType(all, GameElement.FIRE_MAN, g);
         drawByType(all, GameElement.WATER_MAN, g);
-
-        // 显示提示消息（从 ElementManager.getTipMessage() 获取）
-        String tip = ElementManager.getManager().getTipMessage();
-        if (tip != null) {
-            g.setColor(Color.BLACK);
-            g.setFont(new Font("微软雅黑", Font.BOLD, 24));
-            g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
-        }
     }
 
     private void drawByType(Map<GameElement, List<ElementObj>> all, GameElement type, Graphics g) {
@@ -550,6 +542,15 @@ public class GameBoard extends ElementObj {
             drawWinOverlay((Graphics2D) g);
         } else if (gameOver) {
             drawGameOverOverlay((Graphics2D) g);
+        }
+        // 冰火人模式：显示提示消息（在所有元素绘制完成后显示，确保在最上层）
+        else if (isFireIceMode()) {
+            String tip = ElementManager.getManager().getTipMessage();
+            if (tip != null) {
+                g.setColor(Color.BLACK);
+                g.setFont(new Font("微软雅黑", Font.BOLD, 24));
+                g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
+            }
         }
     }
 

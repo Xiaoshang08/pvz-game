@@ -1,5 +1,9 @@
 package com.tedu.element;
 
+import com.tedu.manager.ElementManager;
+import com.tedu.manager.GameElement;
+import com.tedu.manager.GameLoad;
+import com.tedu.util.GameImage;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -8,30 +12,22 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-
-import com.tedu.manager.ElementManager;
-import com.tedu.manager.GameElement;
-import com.tedu.manager.GameLoad;
-import com.tedu.util.GameImage;
 
 /**
  * GameBoard：游戏主战场背景与状态中心。
  *
- * 本次升级：
- * 1. 首页按钮重新对齐；
- * 2. 首页左侧加入“森林冰火小人”故事背景；
- * 3. 点击开始后先进入选卡/预览流程，并做一个向右平移的镜头；
- * 4. 战斗地图加大，房前增加公路；
- * 5. 顶部功能栏改成双排布局，为后续扩展留出空间。
+ * 新增剧情系统： - 开场剧情（黑底白字） - 每关首次进入时的提示卡片 - 胜利后剧情台词 - 第三关结局动画
  */
 public class GameBoard extends ElementObj {
+
     private static GameBoard instance;
     private BufferedImage homeBackgroundImage;
     private BufferedImage levelSelectBackgroundImage;
@@ -172,7 +168,7 @@ public class GameBoard extends ElementObj {
 
     private final Plant[][] plantGrid = new Plant[rows][cols];
     private final Random random = new Random();
-    private final String[] selectablePlants = { "豌豆射手", "向日葵" };
+    private final String[] selectablePlants = {"豌豆射手", "向日葵"};
 
     private int zombieSpawnCounter = 0;
     private int sunDropCounter = 0;
@@ -192,10 +188,54 @@ public class GameBoard extends ElementObj {
     private boolean battleIntroPlaying = false;
     private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
-    private int unlockedLevel = 2;
+    private int unlockedLevel = 3;  // 改为从1开始
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
+
+    // ==================== 剧情系统新增字段 ====================
+    private boolean storyPlayed = false;                // 开场剧情是否已播放
+    private Map<Integer, Boolean> levelTipShown = new HashMap<>(); // 各关卡提示是否已显示
+    private String winMessage = null;                   // 胜利后额外显示的台词
+    private boolean endingPlaying = false;              // 是否正在播放结局
+    private long endingStartTime = 0;                   // 结局开始时间
+    private static final long ENDING_DURATION = 4000;   // 结局显示时间（毫秒）
+
+    // 剧情文本
+    private final String[] openingStory = {
+        "深夜，我被一阵沙沙声惊醒。窗外的草坪上，无数双绿眼睛在晃动——是僵尸！",
+        "这是红月仙给我们的第一个困难！",
+        "向日葵急切地对我喊：“它们来了！快用阳光唤醒大家，守住这条路！”",
+        "我握紧弹弓，深吸一口气：“好，那就让它们看看，这片草坪谁做主。”",
+        "来吧，第一波——"
+    };
+    private int openingIndex = 0;
+    private long openingLastTime = 0;
+    private static final long OPENING_DELAY = 2000; // 每句显示2秒
+
+    // 关卡剧情和玩法提示
+    private final String[] levelStory = {
+        // 第一关
+        "深夜，我被一阵沙沙声惊醒。窗外的草坪上，无数双绿眼睛在晃动——是僵尸！\n向日葵急切地对我喊：“它们来了！快用阳光唤醒大家，守住这条路！”\n我握紧弹弓，深吸一口气：“好，那就让它们看看，这片草坪谁做主。”\n来吧，第一波——",
+        // 第二关
+        "击退僵尸后，我穿过迷雾，来到冰火森林。这里一半冰封，一半燃烧。\n两位精灵——冰仔和火仔——被困在结界中，互相敌对。他们的能量核心被锁在迷宫深处。\n我必须同时解开冰之迷宫和火之迷宫，找回冰火精魄。\n冰面上只能滑行，火地上需要躲避熔岩……每一步都要思考。\n只有冰与火联手，才能打开通往要塞的路。",
+        // 第三关
+        "冰火之力涌入弹弓，我冲进暗影要塞。黑暗法师就在最深处。\n影怪从四面八方扑来——它们速度快、护甲厚，但弱点在胸口核心。\n我用冰弹冻结高速敌人，用火弹烧毁护甲，瞄准核心一下一下地射击。\n子弹越来越密，但我不能后退。\n最后一战……为了这片森林，为了所有伙伴！"
+    };
+    private final String[] levelGameplay = {
+        // 第一关玩法
+        "玩法：\n• 点击植物卡片选择豌豆射手或向日葵\n• 点击草坪格子种植植物\n• 收集阳光，抵御僵尸\n• 不要让僵尸走到最左边！",
+        // 第二关玩法
+        "玩法：\n• 控制角色在冰面/火地上移动\n• 收集冰之精魄和火之精魄\n• 避开陷阱，注意冰冻、火焰和毒液伤害",
+        // 第三关玩法
+        "玩法：\n• 点击空格射击\n• 击中敌人核心造成巨大伤害\n• 躲避敌人子弹幕\n• 消灭所有敌人"
+    };
+    private final String[] winMessages = {
+        "打得漂亮！不过红月仙不会善罢甘休……",
+        "冰火融合！现在弹弓有了元素之力，去给他点颜色看看。",
+        null // 第三关胜利后不显示普通胜利界面，直接播放结局
+    };
+    private final String endingText = "红月仙：“你……究竟是谁？”\n\n我：“只是一个不想让森林哭泣的人。”";
 
     public GameBoard() {
         instance = this;
@@ -203,6 +243,10 @@ public class GameBoard extends ElementObj {
         setY(0);
         setW(WINDOW_W);
         setH(WINDOW_H);
+        // 初始化提示记录
+        for (int i = 1; i <= 3; i++) {
+            levelTipShown.put(i, false);
+        }
     }
 
     public static GameBoard getInstance() {
@@ -227,7 +271,10 @@ public class GameBoard extends ElementObj {
         HOME,
         LEVEL_SELECT,
         PREPARE,
-        PLAYING
+        PLAYING,
+        OPENING_STORY, // 开场剧情
+        LEVEL_TIP, // 关卡提示卡片
+        ENDING           // 结局
     }
 
     @Override
@@ -243,34 +290,213 @@ public class GameBoard extends ElementObj {
             drawLevelSelectScene(g2);
             return;
         }
+        if (stage == GameStage.OPENING_STORY) {
+            drawLevelSelectScene(g2); // 背景为选关背景
+            drawOpeningStoryOverlay(g2);
+            return;
+        }
+        if (stage == GameStage.LEVEL_TIP) {
+            drawLevelSelectScene(g2); // 背景为选关背景
+            drawLevelTipOverlay(g2);
+            return;
+        }
+        if (stage == GameStage.ENDING) {
+            drawLevelSelectScene(g2); // 背景为选关背景
+            drawEndingOverlay(g2);
+            return;
+        }
         if (stage == GameStage.PREPARE) {
             drawPrepareScene(g2);
             return;
         }
-
         drawBattleScene(g2);
     }
 
+    // ==================== 剧情绘制方法 ====================
+    private void drawOpeningStoryOverlay(Graphics2D g) {
+        g.setColor(new Color(0, 0, 0, 220));
+        g.fillRect(0, 0, getW(), getH());
+
+        if (openingIndex < openingStory.length) {
+            String line = openingStory[openingIndex];
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("Microsoft YaHei", Font.BOLD, 28));
+            FontMetrics fm = g.getFontMetrics();
+            int textWidth = fm.stringWidth(line);
+            int x = (getW() - textWidth) / 2;
+            int y = getH() / 2;
+            g.drawString(line, x, y);
+
+            g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 16));
+            g.setColor(new Color(255, 255, 255, 150));
+            g.drawString("点击任意键跳过", getW() - 120, getH() - 30);
+        }
+    }
+
+    private void drawLevelTipOverlay(Graphics2D g) {
+        // 半透明黑色遮罩
+        g.setColor(new Color(0, 0, 0, 200));
+        g.fillRect(0, 0, getW(), getH());
+
+        int cardW = 700;
+        int cardH = 500;
+        int cardX = (getW() - cardW) / 2;
+        int cardY = (getH() - cardH) / 2;
+
+        // 卡片背景
+        g.setColor(new Color(30, 30, 40, 240));
+        g.fillRoundRect(cardX, cardY, cardW, cardH, 30, 30);
+        g.setColor(new Color(200, 200, 220));
+        g.drawRoundRect(cardX, cardY, cardW, cardH, 30, 30);
+
+        // 标题
+        String title = selectedLevel == 1 ? "第一关 · 草坪保卫战 "
+                : (selectedLevel == 2 ? "第二关 · 冰火森林的试炼 " : "第三关 · 暗影要塞的决战");
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 28));
+        g.setColor(new Color(255, 220, 100));
+        int titleW = g.getFontMetrics().stringWidth(title);
+        g.drawString(title, cardX + (cardW - titleW) / 2, cardY + 50);
+
+        // 分隔线
+        g.setColor(new Color(150, 150, 170));
+        g.drawLine(cardX + 30, cardY + 80, cardX + cardW - 30, cardY + 80);
+
+        // 剧情文本（自动换行）
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 18));
+        g.setColor(Color.WHITE);
+        String story = levelStory[selectedLevel - 1];
+        drawWrappedText(g, story, cardX + 40, cardY + 110, cardW - 80, 28);
+
+        // 玩法文本
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 20));
+        g.setColor(new Color(255, 200, 100));
+        g.drawString("【玩法说明】", cardX + 40, cardY + 280);
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 18));
+        g.setColor(Color.WHITE);
+        String gameplay = levelGameplay[selectedLevel - 1];
+        drawWrappedText(g, gameplay, cardX + 40, cardY + 315, cardW - 80, 26);
+
+        // 开始按钮
+        int btnW = 180;
+        int btnH = 50;
+        int btnX = cardX + (cardW - btnW) / 2;
+        int btnY = cardY + cardH - 70;
+        drawStyledButton(g, btnX, btnY, btnW, btnH, new Color(70, 130, 200), "开始战斗");
+    }
+
+    private void drawEndingOverlay(Graphics2D g) {
+        g.setColor(new Color(0, 0, 0, 220));
+        g.fillRect(0, 0, getW(), getH());
+
+        g.setColor(Color.WHITE);
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 26));
+        String[] lines = endingText.split("\n");
+        int lineY = getH() / 2 - 50;
+        for (String line : lines) {
+            FontMetrics fm = g.getFontMetrics();
+            int textWidth = fm.stringWidth(line);
+            int x = (getW() - textWidth) / 2;
+            g.drawString(line, x, lineY);
+            lineY += 40;
+        }
+    }
+
+    private void drawWrappedText(Graphics2D g, String text, int x, int y, int maxWidth, int lineHeight) {
+        FontMetrics fm = g.getFontMetrics();
+        String[] words = text.split("(?<=[。！？\n])|(?=[。！？\n])|\\s+");
+        StringBuilder line = new StringBuilder();
+        int currentY = y;
+        for (String word : words) {
+            if (word.equals("\n")) {
+                g.drawString(line.toString(), x, currentY);
+                line.setLength(0);
+                currentY += lineHeight;
+                continue;
+            }
+            String testLine = line.length() == 0 ? word : line + word;
+            if (fm.stringWidth(testLine) <= maxWidth) {
+                line.append(word);
+            } else {
+                if (line.length() > 0) {
+                    g.drawString(line.toString(), x, currentY);
+                    currentY += lineHeight;
+                    line.setLength(0);
+                }
+                line.append(word);
+            }
+        }
+        if (line.length() > 0) {
+            g.drawString(line.toString(), x, currentY);
+        }
+    }
+
+    // ==================== 剧情逻辑方法 ====================
+    private void startOpeningStory() {
+        stage = GameStage.OPENING_STORY;
+        openingIndex = 0;
+        openingLastTime = System.currentTimeMillis();
+    }
+
+    private void updateOpeningStory() {
+        if (stage != GameStage.OPENING_STORY) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - openingLastTime >= OPENING_DELAY) {
+            openingIndex++;
+            openingLastTime = now;
+            if (openingIndex >= openingStory.length) {
+                // 开场剧情结束，进入选关界面
+                stage = GameStage.LEVEL_SELECT;
+                storyPlayed = true;
+                openingIndex = 0;
+            }
+        }
+    }
+
+    private void skipOpeningStory() {
+        if (stage == GameStage.OPENING_STORY) {
+            stage = GameStage.LEVEL_SELECT;
+            storyPlayed = true;
+            openingIndex = 0;
+        }
+    }
+
+    private void startLevelTip(int level) {
+        selectedLevel = level;
+        stage = GameStage.LEVEL_TIP;
+    }
+
+    private void startEnding() {
+        endingPlaying = true;
+        stage = GameStage.ENDING;
+        endingStartTime = System.currentTimeMillis();
+    }
+
+    private void updateEnding() {
+        if (stage == GameStage.ENDING && System.currentTimeMillis() - endingStartTime >= ENDING_DURATION) {
+            // 结局播放完毕，返回首页
+            returnToHome();
+            endingPlaying = false;
+        }
+    }
+
+    // ==================== 原有场景绘制（只修改了按钮调用，其他不变） ====================
     private void drawBattleScene(Graphics2D g) {
-        // 第二关
         if (isFireIceMode()) {
             drawFireIceScene(g);
             return;
         }
-        // 第三关
         if (isContraMode()) {
             drawContraScene(g);
             return;
         }
-        // 第一关
         g.setColor(new Color(221, 232, 196));
         g.fillRect(0, 0, getW(), getH());
         drawBattleEnvironment(g, getSceneCameraOffset(), battleIntroPlaying);
     }
 
     private void drawFireIceScene(Graphics2D g) {
-        // 调用 ElementManager 中所有地形和角色的绘制
-        // 参考后面文件 GameMainJPanel 中的绘制顺序
         Map<GameElement, List<ElementObj>> all = em.getGameElements();
         drawByType(all, GameElement.MAPS, g);
         drawByType(all, GameElement.FIRE_TERRAIN, g);
@@ -282,12 +508,16 @@ public class GameBoard extends ElementObj {
         drawByType(all, GameElement.TRAP_TERRAIN, g);
         drawByType(all, GameElement.FIRE_MAN, g);
         drawByType(all, GameElement.WATER_MAN, g);
+        // 绘制菜单按钮（右上角）
+        drawStyledButton(g, MENU_BTN_X, MENU_BTN_Y, MENU_BTN_W, MENU_BTN_H,
+                new Color(104, 109, 224), "菜单 ≡");
     }
 
     private void drawByType(Map<GameElement, List<ElementObj>> all, GameElement type, Graphics g) {
         for (ElementObj obj : all.get(type)) {
-            if (obj.isLive())
+            if (obj.isLive()) {
                 obj.showElement(g);
+            }
         }
     }
 
@@ -320,7 +550,6 @@ public class GameBoard extends ElementObj {
         }
         if (homeBackgroundImage != null) {
             g.drawImage(homeBackgroundImage, 0, 0, getW(), getH(), null);
-
             g.setColor(new Color(0, 0, 0, 85));
             g.fillRoundRect(460, 315, 360, 245, 34, 34);
             g.setColor(new Color(255, 244, 184));
@@ -328,10 +557,9 @@ public class GameBoard extends ElementObj {
             g.drawString("植物大战僵尸", 535, 370);
             g.setFont(new Font("SansSerif", Font.PLAIN, 18));
             g.drawString("森林冰火小人版 Mini Demo", 525, 402);
-
-            drawButton(g, HOME_BUTTON_X, HOME_START_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
+            drawStyledButton(g, HOME_BUTTON_X, HOME_START_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
                     new Color(83, 160, 56), "开始游戏");
-            drawButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
+            drawStyledButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
                     new Color(118, 118, 118), "退出游戏");
             return;
         }
@@ -367,9 +595,9 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.PLAIN, 18));
         g.drawString("森林冰火小人版 Mini Demo", 855, 252);
 
-        drawButton(g, HOME_BUTTON_X, HOME_START_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
+        drawStyledButton(g, HOME_BUTTON_X, HOME_START_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
                 new Color(83, 160, 56), "开始游戏");
-        drawButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
+        drawStyledButton(g, HOME_BUTTON_X, HOME_EXIT_BTN_Y, HOME_BUTTON_W, HOME_BUTTON_H,
                 new Color(118, 118, 118), "退出游戏");
     }
 
@@ -380,31 +608,31 @@ public class GameBoard extends ElementObj {
         if (levelSelectBackgroundImage != null) {
             g.drawImage(levelSelectBackgroundImage, 0, 0, getW(), getH(), null);
         } else {
-        g.setColor(new Color(168, 219, 247));
-        g.fillRect(0, 0, getW(), 410);
-        g.setColor(new Color(196, 227, 145));
-        g.fillRect(0, 410, getW(), 310);
-
-        g.setColor(new Color(255, 244, 170));
-        g.fillOval(80, 55, 120, 120);
-        g.setColor(new Color(140, 208, 92));
-        g.fillOval(-60, 390, 620, 250);
-        g.fillOval(320, 430, 980, 290);
-
+            g.setColor(new Color(168, 219, 247));
+            g.fillRect(0, 0, getW(), 410);
+            g.setColor(new Color(196, 227, 145));
+            g.fillRect(0, 410, getW(), 310);
+            g.setColor(new Color(255, 244, 170));
+            g.fillOval(80, 55, 120, 120);
+            g.setColor(new Color(140, 208, 92));
+            g.fillOval(-60, 390, 620, 250);
+            g.fillOval(320, 430, 980, 290);
         }
 
         g.setColor(levelSelectBackgroundImage != null ? new Color(25, 87, 87) : new Color(255, 255, 255, 228));
         g.setFont(new Font("Serif", Font.BOLD, 42));
-        g.drawString("选择关卡", 520, 120);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 22));
-        g.drawString("先从第一关出发吧，后面的关卡以后再慢慢开放。", 355, 165);
+        g.drawString("选择关卡", 550, 150);
+//        g.setFont(new Font("SansSerif", Font.PLAIN, 22));
+//        g.drawString("先从第一关出发吧，后面的关卡以后再慢慢开放。", 355, 165);
 
         drawLevelCard(g, LEVEL1_X, LEVEL_CARD_Y, 1, true, "门前草坪", "当前可挑战");
+//        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, true, "林间小路", "WASD + 上下左右");
+//        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "夜色庭院", "WASD + Space");
         drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "林间小路", "暂未解锁");
         drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "夜色庭院", "暂未解锁");
+        //drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "Contra PVZ", "WASD + Space");
 
-        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "Contra PVZ", "WASD + Space");
-        drawButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
+        drawStyledButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
                 new Color(112, 112, 112), "返回首页");
     }
 
@@ -514,9 +742,9 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.PLAIN, 16));
         g.drawString("先看看门前公路上的僵尸，再准备布阵。", 72, 378);
 
-        drawButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
+        drawStyledButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
                 new Color(86, 164, 63), "开始战斗");
-        drawButton(g, PREP_BACK_BTN_X, PREP_BACK_BTN_Y, PREP_BACK_BTN_W, PREP_BACK_BTN_H,
+        drawStyledButton(g, PREP_BACK_BTN_X, PREP_BACK_BTN_Y, PREP_BACK_BTN_W, PREP_BACK_BTN_H,
                 new Color(112, 112, 112), "返回首页");
     }
 
@@ -539,8 +767,8 @@ public class GameBoard extends ElementObj {
 
         if (type == ZombiePreviewType.CONE) {
             g.setColor(new Color(242, 131, 36));
-            int[] xs = { x + 14, x + 30, x + 48 };
-            int[] ys = { y + 20, y - 10, y + 20 };
+            int[] xs = {x + 14, x + 30, x + 48};
+            int[] ys = {y + 20, y - 10, y + 20};
             g.fillPolygon(xs, ys, 3);
         } else if (type == ZombiePreviewType.BUCKET) {
             g.setColor(new Color(136, 144, 154));
@@ -562,8 +790,8 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(222, 184, 122));
         g.fillRect(x + 40, y + 46, w, h);
         g.setColor(new Color(179, 89, 62));
-        int[] roofX = { x + 20, x + 105, x + 190 };
-        int[] roofY = { y + 48, y - 18, y + 48 };
+        int[] roofX = {x + 20, x + 105, x + 190};
+        int[] roofY = {y + 48, y - 18, y + 48};
         g.fillPolygon(scalePoints(roofX, x, scale), scalePoints(roofY, y, scale), 3);
         g.setColor(new Color(130, 81, 49));
         g.fillRect((int) (x + 94 * scale), (int) (y + 98 * scale), (int) (30 * scale), (int) (60 * scale));
@@ -590,9 +818,7 @@ public class GameBoard extends ElementObj {
             drawWinOverlay((Graphics2D) g);
         } else if (gameOver) {
             drawGameOverOverlay((Graphics2D) g);
-        }
-        // 冰火人模式：显示提示消息（在所有元素绘制完成后显示，确保在最上层）
-        else if (isFireIceMode()) {
+        } else if (isFireIceMode()) {
             String tip = ElementManager.getManager().getTipMessage();
             if (tip != null) {
                 g.setColor(Color.BLACK);
@@ -610,18 +836,17 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.BOLD, 34));
         g.drawString("游戏菜单", 560, 210);
 
-        drawButton(g, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W, PAUSE_CONTINUE_BTN_H,
+        drawStyledButton(g, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W, PAUSE_CONTINUE_BTN_H,
                 new Color(64, 155, 88), "继续游戏");
-        drawButton(g, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W, PAUSE_RESTART_BTN_H,
+        drawStyledButton(g, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W, PAUSE_RESTART_BTN_H,
                 new Color(243, 156, 18), "重新开始");
-        drawButton(g, PAUSE_HOME_BTN_X, PAUSE_HOME_BTN_Y, PAUSE_HOME_BTN_W, PAUSE_HOME_BTN_H,
+        drawStyledButton(g, PAUSE_HOME_BTN_X, PAUSE_HOME_BTN_Y, PAUSE_HOME_BTN_W, PAUSE_HOME_BTN_H,
                 new Color(52, 152, 219), "返回首页");
-        drawButton(g, PAUSE_EXIT_BTN_X, PAUSE_EXIT_BTN_Y, PAUSE_EXIT_BTN_W, PAUSE_EXIT_BTN_H,
+        drawStyledButton(g, PAUSE_EXIT_BTN_X, PAUSE_EXIT_BTN_Y, PAUSE_EXIT_BTN_W, PAUSE_EXIT_BTN_H,
                 new Color(86, 86, 86), "退出游戏");
     }
 
     private void drawWinOverlay(Graphics2D g) {
-        // 增加冰火人胜利绘制
         if (isFireIceMode()) {
             g.setColor(new Color(0, 0, 0, 120));
             g.fillRect(0, 0, getW(), getH());
@@ -630,23 +855,27 @@ public class GameBoard extends ElementObj {
             g.drawString("恭喜通关！", 480, 300);
             g.setColor(Color.WHITE);
             g.drawString("森林冰火人成功获得道具", 420, 360);
-        }
-        // 非冰火人（目前只有第一关的）胜利界面
-        else {
+            if (winMessage != null && !winMessage.isEmpty()) {
+                g.setFont(new Font("SansSerif", Font.PLAIN, 22));
+                g.drawString(winMessage, 480, 420);
+            }
+        } else {
             g.setColor(new Color(0, 0, 0, 120));
             g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
-
             g.setColor(new Color(241, 196, 15));
             g.setFont(new Font("SansSerif", Font.BOLD, 44));
             g.drawString("YOU WIN", 510, 300);
             g.setColor(Color.WHITE);
             g.setFont(new Font("SansSerif", Font.PLAIN, 20));
             g.drawString("你已经击败了全部 20 只普通僵尸！", 470, 340);
+            if (winMessage != null && !winMessage.isEmpty()) {
+                g.setFont(new Font("SansSerif", Font.PLAIN, 18));
+                g.drawString(winMessage, 520, 390);
+            }
         }
-        // 绘制重新开始和返回首页按钮
-        drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
+        drawStyledButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                 new Color(46, 204, 113), "重新开始");
-        drawButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
+        drawStyledButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
                 new Color(52, 152, 219), "返回首页");
     }
 
@@ -661,12 +890,33 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.PLAIN, 18));
         g.drawString("僵尸走到了最左边，你的草坪被攻破啦", 460, 340);
 
-        drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
+        drawStyledButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                 new Color(243, 156, 18), "重新开始");
-        drawButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
+        drawStyledButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
                 new Color(52, 152, 219), "返回首页");
     }
 
+    private void drawStyledButton(Graphics2D g, int x, int y, int w, int h, Color baseColor, String text) {
+        g.setColor(new Color(0, 0, 0, 60));
+        g.fillRoundRect(x + 3, y + 3, w, h, 24, 24);
+        g.setColor(new Color(0, 0, 0, 30));
+        g.fillRoundRect(x + 5, y + 5, w, h, 24, 24);
+
+        java.awt.GradientPaint grad = new java.awt.GradientPaint(x, y, baseColor.brighter(),
+                x, y + h, baseColor.darker());
+        g.setPaint(grad);
+        g.fillRoundRect(x, y, w, h, 24, 24);
+
+        g.setColor(Color.WHITE);
+        int fontSize = h >= 50 ? 22 : 18;
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, fontSize));
+        FontMetrics fm = g.getFontMetrics();
+        int textX = x + (w - fm.stringWidth(text)) / 2;
+        int textY = y + (h + fm.getAscent()) / 2 - 2;
+        g.drawString(text, textX, textY);
+    }
+
+    @Deprecated
     private void drawButton(Graphics2D g, int x, int y, int w, int h, Color color, String text) {
         g.setColor(color);
         g.fillRoundRect(x, y, w, h, 24, 24);
@@ -683,17 +933,23 @@ public class GameBoard extends ElementObj {
 
     @Override
     protected void add(long gameTime) {
-        if (stage == GameStage.LEVEL_SELECT) {
+        if (stage == GameStage.OPENING_STORY) {
+            updateOpeningStory();
             return;
         }
-
+        if (stage == GameStage.ENDING) {
+            updateEnding();
+            return;
+        }
+        if (stage == GameStage.LEVEL_TIP || stage == GameStage.LEVEL_SELECT) {
+            return;
+        }
         if (stage == GameStage.PREPARE) {
             if (prepCameraOffset < PREP_CAMERA_MAX) {
                 prepCameraOffset = Math.min(PREP_CAMERA_MAX, prepCameraOffset + 3);
             }
             return;
         }
-
         if (stage == GameStage.PLAYING && battleIntroPlaying) {
             if (introCameraOffset > 0) {
                 introCameraOffset = Math.max(0, introCameraOffset - 5);
@@ -705,21 +961,16 @@ public class GameBoard extends ElementObj {
             }
             return;
         }
-
         if (!isPlaying()) {
             return;
         }
-
         if (stage == GameStage.PLAYING && isFireIceMode()) {
-            // 冰火人模式不需要额外生成逻辑，所有更新已在 GameThread 中调用各元素的 model()
             return;
         }
-
         if (isContraMode()) {
             updateContraMode(gameTime);
             return;
         }
-
         if (spawnedZombies < getMaxZombies()) {
             startProtectCounter++;
             if (startProtectCounter >= START_PROTECT_TIME) {
@@ -730,7 +981,6 @@ public class GameBoard extends ElementObj {
                 }
             }
         }
-
         sunDropCounter++;
         if (sunDropCounter >= SUN_DROP_INTERVAL) {
             sunDropCounter = 0;
@@ -742,7 +992,6 @@ public class GameBoard extends ElementObj {
         if (contraPlayer != null && contraPlayer.isLive()) {
             updateContraCameraFor(contraPlayer.getX());
         }
-
         if (spawnedZombies < getMaxZombies()) {
             zombieSpawnCounter++;
             if (zombieSpawnCounter >= 58) {
@@ -754,6 +1003,36 @@ public class GameBoard extends ElementObj {
 
     @Override
     public void mouseClick(int mouseX, int mouseY) {
+        if (stage == GameStage.OPENING_STORY) {
+            skipOpeningStory();
+            return;
+        }
+        if (stage == GameStage.LEVEL_TIP) {
+            int cardW = 700;
+            int cardH = 500;
+            int cardX = (getW() - cardW) / 2;
+            int cardY = (getH() - cardH) / 2;
+            int btnW = 180;
+            int btnH = 50;
+            int btnX = cardX + (cardW - btnW) / 2;
+            int btnY = cardY + cardH - 70;
+            if (mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= btnY && mouseY <= btnY + btnH) {
+                levelTipShown.put(selectedLevel, true);
+                // 根据关卡进入不同流程
+                if (selectedLevel == 1) {
+                    enterPrepareStage(1);
+                } else {
+                    startBattle();  // 第二、三关直接开始战斗
+                }
+            }
+            return;
+        }
+        if (stage == GameStage.ENDING) {
+            // 点击任意位置直接结束结局返回首页
+            returnToHome();
+            return;
+        }
+
         if (stage == GameStage.HOME) {
             if (isInHomeStartButton(mouseX, mouseY)) {
                 enterLevelSelectStage();
@@ -771,25 +1050,35 @@ public class GameBoard extends ElementObj {
                 return;
             }
             if (isInLevel1Button(mouseX, mouseY)) {
-                enterPrepareStage(1);
+                if (!levelTipShown.getOrDefault(1, false)) {
+                    startLevelTip(1);
+                } else {
+                    enterPrepareStage(1);
+                }
                 return;
             }
-            // 新增第二关点击响应
             if (isInLevel2Button(mouseX, mouseY) && unlockedLevel >= 2) {
-                selectedLevel = 2;
-                startBattle();
+                if (!levelTipShown.getOrDefault(2, false)) {
+                    startLevelTip(2);
+                } else {
+                    selectedLevel = 2;
+                    startBattle();
+                }
                 return;
             }
-            if (isInLevel3Button(mouseX, mouseY)) {
-                selectedLevel = 3;
-                startBattle();
+            if (isInLevel3Button(mouseX, mouseY) && unlockedLevel >= 3) {
+                if (!levelTipShown.getOrDefault(3, false)) {
+                    startLevelTip(3);
+                } else {
+                    selectedLevel = 3;
+                    startBattle();
+                }
                 return;
             }
             return;
         }
 
         if (stage == GameStage.PLAYING && isFireIceMode()) {
-            // 冰火人模式：胜利或游戏结束状态下处理按钮点击
             if (gameWin || gameOver) {
                 if (isInRestartButton(mouseX, mouseY)) {
                     restartGame();
@@ -801,7 +1090,6 @@ public class GameBoard extends ElementObj {
                 }
                 return;
             }
-            // 冰火人模式无需鼠标放置植物或铲子，只处理菜单按钮
             if (isInMenuButton(mouseX, mouseY)) {
                 pauseGame();
             }
@@ -876,38 +1164,33 @@ public class GameBoard extends ElementObj {
         } else {
             tryPlantAt(mouseX, mouseY);
         }
+
     }
 
     public void tryPlantAt(int mouseX, int mouseY) {
         if (!isPlaying() || isContraMode()) {
             return;
         }
-
         int row = getRowByY(mouseY);
         int col = getColByX(mouseX);
         if (row == -1 || col == -1) {
             return;
         }
-
         Plant oldPlant = plantGrid[row][col];
         if (oldPlant != null && oldPlant.isLive()) {
             return;
         }
-
         int cost = getSelectedPlantCost();
         if (currentSun < cost) {
             return;
         }
-
         currentSun -= cost;
-
         Plant plant;
         if (selectedPlantType == PlantType.SUNFLOWER) {
             plant = new Sunflower(row, col, getCellX(col), getCellY(row), cellW, cellH);
         } else {
             plant = new PeaShooter(row, col, getCellX(col), getCellY(row), cellW, cellH);
         }
-
         plantGrid[row][col] = plant;
         ElementManager.getManager().addElement(plant, GameElement.PLANT);
     }
@@ -916,13 +1199,11 @@ public class GameBoard extends ElementObj {
         if (!isPlaying() || isContraMode()) {
             return;
         }
-
         int row = getRowByY(mouseY);
         int col = getColByX(mouseX);
         if (row == -1 || col == -1) {
             return;
         }
-
         Plant plant = plantGrid[row][col];
         if (plant != null && plant.isLive()) {
             plant.setLive(false);
@@ -952,7 +1233,6 @@ public class GameBoard extends ElementObj {
         int minX = Math.max(CONTRA_SPAWN_START_X, getContraCameraX() + getW() / 2);
         int maxX = CONTRA_MAP_W - CONTRA_SPAWN_END_MARGIN;
         int candidateX = clamp(baseX + jitter, minX, maxX);
-
         for (int i = 0; i < 28; i++) {
             List<Integer> surfaces = getContraSurfacesAt(candidateX + 8, candidateX + 48);
             int surfaceY = chooseContraSpawnSurface(surfaces);
@@ -961,7 +1241,6 @@ public class GameBoard extends ElementObj {
             }
             candidateX = clamp(candidateX + 180 + random.nextInt(260), minX, maxX);
         }
-
         int surfaceY = getContraSurfaceBelow(candidateX + 8, candidateX + 48, CONTRA_TOP_Y);
         return new int[]{candidateX, surfaceY == -1 ? CONTRA_GROUND_Y : surfaceY};
     }
@@ -970,19 +1249,17 @@ public class GameBoard extends ElementObj {
         if (surfaces.isEmpty()) {
             return -1;
         }
-
         int spawnPattern = spawnedZombies % 5;
         int preferred = chooseSurfaceInSourceYRange(surfaces, spawnPattern == 0 || spawnPattern == 2 ? 154 : 118,
                 spawnPattern == 0 || spawnPattern == 2 ? 218 : 154);
         if (preferred != -1) {
             return preferred;
         }
-
         return surfaces.get(random.nextInt(surfaces.size()));
     }
 
     private int chooseSurfaceInSourceYRange(List<Integer> surfaces, int minSourceY, int maxSourceY) {
-        List<Integer> candidates = new ArrayList<Integer>();
+        List<Integer> candidates = new ArrayList<>();
         for (Integer surfaceY : surfaces) {
             int srcY = (surfaceY - CONTRA_MAP_Y) / CONTRA_SCALE;
             if (srcY >= minSourceY && srcY <= maxSourceY) {
@@ -996,7 +1273,7 @@ public class GameBoard extends ElementObj {
     }
 
     private List<Integer> getContraSurfacesAt(int leftWorldX, int rightWorldX) {
-        List<Integer> surfaces = new ArrayList<Integer>();
+        List<Integer> surfaces = new ArrayList<>();
         int lastSurfaceY = -100;
         for (int worldY = CONTRA_TOP_Y; worldY <= CONTRA_SURFACE_SEARCH_BOTTOM; worldY++) {
             if (hasContraSurfaceAt(leftWorldX, rightWorldX, worldY) && worldY - lastSurfaceY > 18) {
@@ -1016,6 +1293,10 @@ public class GameBoard extends ElementObj {
     }
 
     public void enterLevelSelectStage() {
+        if (!storyPlayed) {
+            startOpeningStory();
+            return;
+        }
         clearDynamicElements();
         clearPlantGrid();
         stage = GameStage.LEVEL_SELECT;
@@ -1066,12 +1347,11 @@ public class GameBoard extends ElementObj {
         gameOver = false;
         gameWin = false;
         stage = GameStage.PLAYING;
-        if (selectedLevel == 2) { // 冰火人模式
+        if (selectedLevel == 2) {
             currentSun = 0;
             introCameraOffset = 0;
             battleIntroPlaying = false;
-            // 加载地图和角色
-            GameLoad.MapLoad(1); // 地图文件为 1.map
+            GameLoad.MapLoad(1);
             GameLoad.loadFireWaterMan();
         } else if (selectedLevel == 3) {
             currentSun = 0;
@@ -1133,6 +1413,9 @@ public class GameBoard extends ElementObj {
         battleIntroPlaying = false;
         introZombieRetreatOffset = 0;
         contraCameraX = 0;
+        // 重置胜利消息
+        winMessage = null;
+        // 注意：不清空 storyPlayed 和 levelTipShown，保持玩家进度
     }
 
     public void triggerGameOver() {
@@ -1151,10 +1434,19 @@ public class GameBoard extends ElementObj {
         gameWin = true;
         paused = false;
         shovelMode = false;
-        // 通关后解锁下一关（若当前关卡小于3且下一关尚未解锁）
         int nextLevel = selectedLevel + 1;
         if (nextLevel <= 3 && unlockedLevel < nextLevel) {
             unlockedLevel = nextLevel;
+        }
+        // 设置胜利台词
+        if (selectedLevel >= 1 && selectedLevel <= 3 && winMessages[selectedLevel - 1] != null) {
+            winMessage = winMessages[selectedLevel - 1];
+        } else {
+            winMessage = null;
+        }
+        // 第三关胜利后播放结局
+        if (selectedLevel == 3) {
+            startEnding();
         }
     }
 
@@ -1200,7 +1492,6 @@ public class GameBoard extends ElementObj {
         return inRect(mouseX, mouseY, LEVEL1_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
     }
 
-    // 添加第二关点击区域的判断方法
     public boolean isInLevel2Button(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, LEVEL2_X, LEVEL_CARD_Y, LEVEL_CARD_W, LEVEL_CARD_H);
     }
@@ -1306,22 +1597,23 @@ public class GameBoard extends ElementObj {
         if (!pressed) {
             return;
         }
-        if (pressed && (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P)) {
-            if (paused)
+        if (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P) {
+            if (paused) {
                 resumeGame();
-            else
+            } else {
                 pauseGame();
+            }
             return;
         }
-        // 如果在游戏中且为冰火人模式
         if (stage == GameStage.PLAYING && isFireIceMode() && !paused && !gameOver && !gameWin) {
             List<ElementObj> fireMen = em.getElementsByKey(GameElement.FIRE_MAN);
             List<ElementObj> waterMen = em.getElementsByKey(GameElement.WATER_MAN);
-            for (ElementObj obj : fireMen)
+            for (ElementObj obj : fireMen) {
                 obj.keyClick(pressed, key);
-            for (ElementObj obj : waterMen)
+            }
+            for (ElementObj obj : waterMen) {
                 obj.keyClick(pressed, key);
-            return;
+            }
         }
     }
 
@@ -1386,10 +1678,7 @@ public class GameBoard extends ElementObj {
             return null;
         }
         Plant plant = plantGrid[row][col];
-        if (plant != null && plant.isLive()) {
-            return plant;
-        }
-        return null;
+        return (plant != null && plant.isLive()) ? plant : null;
     }
 
     public void removePlant(int row, int col) {
@@ -1470,11 +1759,11 @@ public class GameBoard extends ElementObj {
 
     public int getHouseDoorTargetY(int row) {
         int[] laneTargets = {
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
         };
         if (row < 0) {
             row = 0;
@@ -1616,9 +1905,7 @@ public class GameBoard extends ElementObj {
         }
         int centerX = contraPlayer.getX() + contraPlayer.getW() / 2;
         int centerY = contraPlayer.getY() + contraPlayer.getH() / 2;
-        return centerX >= CONTRA_EXIT_LEFT_X
-                && centerY >= CONTRA_EXIT_TOP_Y
-                && centerY <= CONTRA_EXIT_BOTTOM_Y;
+        return centerX >= CONTRA_EXIT_LEFT_X && centerY >= CONTRA_EXIT_TOP_Y && centerY <= CONTRA_EXIT_BOTTOM_Y;
     }
 
     public int getContraSurfaceBelow(int leftWorldX, int rightWorldX, int fromWorldY) {
@@ -1629,7 +1916,6 @@ public class GameBoard extends ElementObj {
         if (contraStageImage == null) {
             return Math.max(CONTRA_TOP_Y, Math.min(CONTRA_GROUND_Y, toWorldY));
         }
-
         int startY = Math.max(CONTRA_MAP_Y, Math.min(fromWorldY, toWorldY));
         int endY = Math.min(CONTRA_SURFACE_SEARCH_BOTTOM, Math.max(fromWorldY, toWorldY));
         for (int worldY = startY; worldY <= endY; worldY++) {
@@ -1647,11 +1933,7 @@ public class GameBoard extends ElementObj {
 
     private boolean hasContraSurfaceAt(int leftWorldX, int rightWorldX, int worldY) {
         int centerX = leftWorldX + Math.max(1, (rightWorldX - leftWorldX) / 2);
-        int[] samples = {
-                leftWorldX + 10,
-                centerX,
-                rightWorldX - 10
-        };
+        int[] samples = {leftWorldX + 10, centerX, rightWorldX - 10};
         int matches = 0;
         for (int worldX : samples) {
             if (isContraSurfacePixel(worldX, worldY)) {
@@ -1661,7 +1943,6 @@ public class GameBoard extends ElementObj {
         if (matches >= 2) {
             return true;
         }
-
         return hasContraSurfaceNear(centerX, worldY)
                 || hasContraSurfaceNear(leftWorldX + 4, worldY)
                 || hasContraSurfaceNear(rightWorldX - 4, worldY);
@@ -1705,9 +1986,7 @@ public class GameBoard extends ElementObj {
 
     private boolean isContraStandableColor(int rgb, int srcY) {
         Color color = new Color(rgb, true);
-        int r = color.getRed();
-        int g = color.getGreen();
-        int b = color.getBlue();
+        int r = color.getRed(), g = color.getGreen(), b = color.getBlue();
         return srcY >= 88 && g >= 115 && g > r + 35 && g > b + 35 && r <= 150 && b <= 120;
     }
 
@@ -1715,12 +1994,7 @@ public class GameBoard extends ElementObj {
         if (contraStageImage == null) {
             return false;
         }
-
-        int[] sampleXs = {
-                leftWorldX,
-                leftWorldX + Math.max(1, (rightWorldX - leftWorldX) / 2),
-                rightWorldX
-        };
+        int[] sampleXs = {leftWorldX, leftWorldX + Math.max(1, (rightWorldX - leftWorldX) / 2), rightWorldX};
         int startY = Math.max(CONTRA_MAP_Y, topWorldY);
         int endY = Math.min(CONTRA_MAP_Y + CONTRA_MAP_H - 1, bottomWorldY);
         for (int worldY = startY; worldY <= endY; worldY += 6) {
@@ -1739,11 +2013,8 @@ public class GameBoard extends ElementObj {
         if (srcX < 0 || srcX >= contraStageImage.getWidth() || srcY < 0 || srcY >= contraStageImage.getHeight()) {
             return false;
         }
-
         Color color = new Color(contraStageImage.getRGB(srcX, srcY), true);
-        int r = color.getRed();
-        int g = color.getGreen();
-        int b = color.getBlue();
+        int r = color.getRed(), g = color.getGreen(), b = color.getBlue();
         return srcY >= 128 && b >= 145 && g >= 70 && r <= 85;
     }
 
@@ -1763,9 +2034,8 @@ public class GameBoard extends ElementObj {
         return stage == GameStage.PLAYING && selectedLevel == 3;
     }
 
-    // 添加level2
     public boolean isFireIceMode() {
-        return stage == GameStage.PLAYING && selectedLevel == 2; // 约定第2关为冰火人模式
+        return stage == GameStage.PLAYING && selectedLevel == 2;
     }
 
     public ContraPlayer getContraPlayer() {

@@ -6,12 +6,18 @@
  */
 package com.tedu.manager;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.swing.ImageIcon;
+
 import com.tedu.element.GameBoard;
 import com.tedu.element.GridCell;
 import com.tedu.element.GameInfoPanel;
 
 public class GameLoad {
     private static final ElementManager em = ElementManager.getManager();
+    public static final Map<String, ImageIcon> imgMap = new HashMap<>();
 
     private GameLoad() {}
 

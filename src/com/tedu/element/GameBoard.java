@@ -143,6 +143,9 @@ public class GameBoard extends ElementObj {
     private static final int CONTRA_MAP_Y = 48;
     private static final int CONTRA_GROUND_Y = 620;
     private static final int CONTRA_TOP_Y = 120;
+    private static final int CONTRA_SURFACE_SEARCH_BOTTOM = CONTRA_MAP_Y + CONTRA_MAP_H - 18;
+    private static final int CONTRA_SPAWN_START_X = 760;
+    private static final int CONTRA_SPAWN_END_MARGIN = 520;
     private final BufferedImage battleSceneImage = GameImage.get(BATTLE_SCENE_IMAGE_PATH);
     private final BufferedImage contraStageImage = GameImage.get(CONTRA_STAGE_IMAGE_PATH);
 
@@ -807,11 +810,30 @@ public class GameBoard extends ElementObj {
 
 
     private void spawnGunZombie() {
-        int[] lanes = {CONTRA_GROUND_Y - 82, CONTRA_GROUND_Y - 170, CONTRA_GROUND_Y - 260};
-        int laneIndex = random.nextInt(lanes.length);
-        int spawnX = Math.min(CONTRA_MAP_W - 180, getContraCameraX() + getW() + 120 + random.nextInt(220));
-        ElementManager.getManager().addElement(new GunZombie(spawnX, lanes[laneIndex]), GameElement.ZOMBIE);
+        int spawnX = chooseContraZombieSpawnX();
+        int surfaceY = getContraSurfaceBelow(spawnX + 8, spawnX + 48, CONTRA_TOP_Y);
+        int spawnY = surfaceY == -1 ? CONTRA_GROUND_Y - 82 : surfaceY - 82;
+        ElementManager.getManager().addElement(new GunZombie(spawnX, spawnY), GameElement.ZOMBIE);
         spawnedZombies++;
+    }
+
+    private int chooseContraZombieSpawnX() {
+        int spawnableWidth = Math.max(1, CONTRA_MAP_W - CONTRA_SPAWN_START_X - CONTRA_SPAWN_END_MARGIN);
+        double progress = getMaxZombies() <= 1 ? 0.0 : (double) spawnedZombies / (getMaxZombies() - 1);
+        int baseX = CONTRA_SPAWN_START_X + (int) Math.round(spawnableWidth * progress);
+        int jitter = random.nextInt(520) - 260;
+        int minX = Math.max(CONTRA_SPAWN_START_X, getContraCameraX() + getW() / 2);
+        int maxX = CONTRA_MAP_W - CONTRA_SPAWN_END_MARGIN;
+        int candidateX = clamp(baseX + jitter, minX, maxX);
+
+        for (int i = 0; i < 16; i++) {
+            int surfaceY = getContraSurfaceBelow(candidateX + 8, candidateX + 48, CONTRA_TOP_Y);
+            if (surfaceY != -1) {
+                return candidateX;
+            }
+            candidateX = clamp(candidateX + 180 + random.nextInt(260), minX, maxX);
+        }
+        return candidateX;
     }
     private void spawnSkySun() {
         int col = random.nextInt(cols);
@@ -876,7 +898,10 @@ public class GameBoard extends ElementObj {
             contraCameraX = 0;
             introCameraOffset = 0;
             battleIntroPlaying = false;
-            contraPlayer = new ContraPlayer(110, CONTRA_GROUND_Y - 76);
+            int playerX = 110;
+            int playerSurfaceY = getContraSurfaceBelow(playerX + 8, playerX + 60, CONTRA_TOP_Y);
+            int playerY = playerSurfaceY == -1 ? CONTRA_GROUND_Y - 76 : playerSurfaceY - 76;
+            contraPlayer = new ContraPlayer(playerX, playerY);
             ElementManager.getManager().addElement(contraPlayer, GameElement.PLAYER);
         } else {
             introCameraOffset = PREP_CAMERA_MAX;
@@ -1268,6 +1293,86 @@ public class GameBoard extends ElementObj {
 
     public int getContraTopBoundY() {
         return CONTRA_TOP_Y;
+    }
+
+    public int getContraSurfaceBelow(int leftWorldX, int rightWorldX, int fromWorldY) {
+        return getContraSurfaceBetween(leftWorldX, rightWorldX, fromWorldY, CONTRA_SURFACE_SEARCH_BOTTOM);
+    }
+
+    public int getContraSurfaceBetween(int leftWorldX, int rightWorldX, int fromWorldY, int toWorldY) {
+        if (contraStageImage == null) {
+            return Math.max(CONTRA_TOP_Y, Math.min(CONTRA_GROUND_Y, toWorldY));
+        }
+
+        int startY = Math.max(CONTRA_MAP_Y, Math.min(fromWorldY, toWorldY));
+        int endY = Math.min(CONTRA_SURFACE_SEARCH_BOTTOM, Math.max(fromWorldY, toWorldY));
+        for (int worldY = startY; worldY <= endY; worldY++) {
+            if (hasContraSurfaceAt(leftWorldX, rightWorldX, worldY)) {
+                return worldY;
+            }
+        }
+        return -1;
+    }
+
+    public boolean isOnContraSurface(int leftWorldX, int rightWorldX, int footWorldY) {
+        int surfaceY = getContraSurfaceBetween(leftWorldX, rightWorldX, footWorldY - 7, footWorldY + 7);
+        return surfaceY != -1 && Math.abs(surfaceY - footWorldY) <= 7;
+    }
+
+    private boolean hasContraSurfaceAt(int leftWorldX, int rightWorldX, int worldY) {
+        int[] samples = {
+                leftWorldX + 10,
+                leftWorldX + Math.max(10, (rightWorldX - leftWorldX) / 2),
+                rightWorldX - 10
+        };
+        int matches = 0;
+        for (int worldX : samples) {
+            if (isContraSurfacePixel(worldX, worldY)) {
+                matches++;
+            }
+        }
+        return matches >= 2;
+    }
+
+    private boolean isContraSurfacePixel(int worldX, int worldY) {
+        int srcX = worldX / CONTRA_SCALE;
+        int srcY = (worldY - CONTRA_MAP_Y) / CONTRA_SCALE;
+        if (srcX < 0 || srcX >= contraStageImage.getWidth() || srcY <= 0 || srcY >= contraStageImage.getHeight()) {
+            return false;
+        }
+        if (!isContraStandableColor(contraStageImage.getRGB(srcX, srcY), srcY)) {
+            return false;
+        }
+        if (isContraStandableColor(contraStageImage.getRGB(srcX, srcY - 1), srcY - 1)) {
+            return false;
+        }
+        return hasFlatContraSurfaceRun(srcX, srcY);
+    }
+
+    private boolean hasFlatContraSurfaceRun(int srcX, int srcY) {
+        int count = 0;
+        int fromX = Math.max(0, srcX - 10);
+        int toX = Math.min(contraStageImage.getWidth() - 1, srcX + 10);
+        for (int x = fromX; x <= toX; x++) {
+            if (isContraStandableColor(contraStageImage.getRGB(x, srcY), srcY)) {
+                count++;
+            }
+        }
+        return count >= 14;
+    }
+
+    private boolean isContraStandableColor(int rgb, int srcY) {
+        Color color = new Color(rgb, true);
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
+        boolean grass = srcY >= 88 && g >= 115 && g > r + 35 && g > b + 35 && r <= 150 && b <= 120;
+        boolean water = srcY >= 128 && b >= 145 && g >= 70 && r <= 85;
+        return grass || water;
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     public boolean isBattleIntroPlaying() {

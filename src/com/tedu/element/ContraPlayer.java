@@ -13,6 +13,10 @@ public class ContraPlayer extends ElementObj {
     private static final String IMAGE_PATH = "images/plants/pea_shooter.png";
     private static final BufferedImage IMAGE = GameImage.get(IMAGE_PATH);
     private static final int SPEED = 7;
+    private static final double GRAVITY = 0.72;
+    private static final double JUMP_SPEED = -15.0;
+    private static final double MAX_FALL_SPEED = 15.0;
+    private static final int DROP_IGNORE_HEIGHT = 18;
     private static final int SHOOT_COOLDOWN = 8;
     private static final int HIT_COOLDOWN = 35;
 
@@ -20,6 +24,10 @@ public class ContraPlayer extends ElementObj {
     private boolean right;
     private boolean up;
     private boolean down;
+    private boolean jumpRequested;
+    private boolean dropRequested;
+    private double verticalSpeed;
+    private boolean onGround;
     private int health = 10;
     private int shootCooldown;
     private int hitCooldown;
@@ -56,8 +64,14 @@ public class ContraPlayer extends ElementObj {
         } else if (key == KeyEvent.VK_D || key == KeyEvent.VK_RIGHT) {
             right = pressed;
         } else if (key == KeyEvent.VK_W || key == KeyEvent.VK_UP) {
+            if (pressed && !up) {
+                jumpRequested = true;
+            }
             up = pressed;
         } else if (key == KeyEvent.VK_S || key == KeyEvent.VK_DOWN) {
+            if (pressed && !down) {
+                dropRequested = true;
+            }
             down = pressed;
         } else if (pressed && key == KeyEvent.VK_SPACE) {
             shoot();
@@ -69,25 +83,17 @@ public class ContraPlayer extends ElementObj {
         GameBoard board = GameBoard.getInstance();
         int worldW = board == null ? 1280 : board.getContraWorldWidth();
         int minY = board == null ? 120 : board.getContraTopBoundY();
-        int maxY = board == null ? 610 : board.getContraGroundY() - getH();
 
         int nextX = getX();
-        int nextY = getY();
         if (left) {
             nextX -= SPEED;
         }
         if (right) {
             nextX += SPEED;
         }
-        if (up) {
-            nextY -= SPEED;
-        }
-        if (down) {
-            nextY += SPEED;
-        }
 
         setX(clamp(nextX, 30, worldW - getW() - 40));
-        setY(clamp(nextY, minY, maxY));
+        applyContraGravity(board, minY);
 
         if (board != null) {
             board.updateContraCameraFor(getX());
@@ -97,6 +103,64 @@ public class ContraPlayer extends ElementObj {
         }
         if (hitCooldown > 0) {
             hitCooldown--;
+        }
+    }
+
+    private void applyContraGravity(GameBoard board, int minY) {
+        if (board == null) {
+            return;
+        }
+
+        int leftFoot = getX() + 8;
+        int rightFoot = getX() + getW() - 8;
+        int footY = getY() + getH();
+        onGround = board.isOnContraSurface(leftFoot, rightFoot, footY);
+
+        if (dropRequested) {
+            int nextSurface = board.getContraSurfaceBelow(leftFoot, rightFoot, footY + DROP_IGNORE_HEIGHT);
+            if (onGround && nextSurface != -1) {
+                setY(getY() + DROP_IGNORE_HEIGHT);
+                verticalSpeed = Math.max(verticalSpeed, 4.0);
+                onGround = false;
+            }
+            dropRequested = false;
+        }
+
+        if (jumpRequested) {
+            if (onGround) {
+                verticalSpeed = JUMP_SPEED;
+                onGround = false;
+            }
+            jumpRequested = false;
+        }
+
+        if (!onGround) {
+            verticalSpeed = Math.min(MAX_FALL_SPEED, verticalSpeed + GRAVITY);
+        } else if (verticalSpeed > 0) {
+            verticalSpeed = 0;
+        }
+
+        int oldFootY = getY() + getH();
+        int nextY = getY() + (int) Math.round(verticalSpeed);
+        if (nextY < minY) {
+            nextY = minY;
+            verticalSpeed = 0;
+        }
+
+        int nextFootY = nextY + getH();
+        if (verticalSpeed >= 0) {
+            int surfaceY = board.getContraSurfaceBetween(leftFoot, rightFoot, oldFootY + 1, nextFootY);
+            if (surfaceY != -1) {
+                setY(surfaceY - getH());
+                verticalSpeed = 0;
+                onGround = true;
+                return;
+            }
+        }
+
+        setY(nextY);
+        if (onGround && !board.isOnContraSurface(leftFoot, rightFoot, getY() + getH())) {
+            onGround = false;
         }
     }
 

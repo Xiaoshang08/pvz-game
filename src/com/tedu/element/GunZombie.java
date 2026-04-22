@@ -7,11 +7,14 @@ import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 
 public class GunZombie extends ElementObj {
-    private static final int SPEED = 2;
+    private static final double GRAVITY = 0.65;
+    private static final double MAX_FALL_SPEED = 14.0;
+    private static final int DETECT_RANGE = 640;
+    private static final double BULLET_SPEED = 8.0;
     private static final int SHOOT_INTERVAL = 42;
     private int health = 4;
     private int shootCounter;
-    private int walkCounter;
+    private double verticalSpeed;
 
     public GunZombie(int x, int y) {
         super(x, y, 56, 82, null);
@@ -63,27 +66,65 @@ public class GunZombie extends ElementObj {
     protected void move() {
         GameBoard board = GameBoard.getInstance();
         ContraPlayer player = board == null ? null : board.getContraPlayer();
-        int playerX = player == null ? getX() - 500 : player.getX();
-        int distance = getX() - playerX;
 
-        if (distance > 520) {
-            walkCounter++;
-            if (walkCounter % 2 == 0) {
-                setX(getX() - SPEED);
-            }
-        }
+        applyContraGravity(board);
 
-        if (distance < 930 && distance > 120) {
+        if (player != null && player.isLive() && canSeePlayer(player)) {
             shootCounter++;
             if (shootCounter >= SHOOT_INTERVAL) {
                 shootCounter = 0;
-                ElementManager.getManager().addElement(new EnemyBullet(getX() + 12, getY() + 42), GameElement.ENEMY_BULLET);
+                shootAt(player);
             }
+        } else if (shootCounter < SHOOT_INTERVAL) {
+            shootCounter++;
+        }
+    }
+
+    private boolean canSeePlayer(ContraPlayer player) {
+        int dx = (player.getX() + player.getW() / 2) - (getX() + getW() / 2);
+        int dy = (player.getY() + player.getH() / 2) - (getY() + getH() / 2);
+        return dx * dx + dy * dy <= DETECT_RANGE * DETECT_RANGE;
+    }
+
+    private void shootAt(ContraPlayer player) {
+        double startX = getX() + getW() / 2.0;
+        double startY = getY() + 42.0;
+        double targetX = player.getX() + player.getW() / 2.0;
+        double targetY = player.getY() + player.getH() / 2.0;
+        double dx = targetX - startX;
+        double dy = targetY - startY;
+        double length = Math.max(1.0, Math.sqrt(dx * dx + dy * dy));
+        double vx = dx / length * BULLET_SPEED;
+        double vy = dy / length * BULLET_SPEED;
+        ElementManager.getManager().addElement(new EnemyBullet((int) startX, (int) startY, vx, vy), GameElement.ENEMY_BULLET);
+    }
+
+    private void applyContraGravity(GameBoard board) {
+        if (board == null) {
+            return;
         }
 
-        if (board != null && getX() < board.getContraCameraX() - 160) {
-            setLive(false);
+        int leftFoot = getX() + 7;
+        int rightFoot = getX() + getW() - 7;
+        int oldFootY = getY() + getH();
+        boolean onGround = board.isOnContraSurface(leftFoot, rightFoot, oldFootY);
+        if (!onGround) {
+            verticalSpeed = Math.min(MAX_FALL_SPEED, verticalSpeed + GRAVITY);
+        } else if (verticalSpeed > 0) {
+            verticalSpeed = 0;
         }
+
+        int nextY = getY() + (int) Math.round(verticalSpeed);
+        int nextFootY = nextY + getH();
+        if (verticalSpeed >= 0) {
+            int surfaceY = board.getContraSurfaceBetween(leftFoot, rightFoot, oldFootY + 1, nextFootY);
+            if (surfaceY != -1) {
+                setY(surfaceY - getH());
+                verticalSpeed = 0;
+                return;
+            }
+        }
+        setY(nextY);
     }
 
     public void takeDamage(int damage) {

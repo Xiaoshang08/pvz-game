@@ -196,7 +196,7 @@ public class GameBoard extends ElementObj {
     private boolean battleIntroPlaying = false;
     private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
-    private int unlockedLevel = 3; // 改为从1开始
+    private int unlockedLevel = 1; // 改为从1开始
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
@@ -626,16 +626,12 @@ public class GameBoard extends ElementObj {
         g.setColor(levelSelectBackgroundImage != null ? new Color(25, 87, 87) : new Color(255, 255, 255, 228));
         g.setFont(new Font("Serif", Font.BOLD, 42));
         g.drawString("选择关卡", 550, 150);
-        // g.setFont(new Font("SansSerif", Font.PLAIN, 22));
-        // g.drawString("先从第一关出发吧，后面的关卡以后再慢慢开放。", 355, 165);
 
-        drawLevelCard(g, LEVEL1_X, LEVEL_CARD_Y, 1, true, "门前草坪", "当前可挑战");
-        // drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, true, "林间小路", "WASD + 上下左右");
-        // drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "夜色庭院", "WASD + Space");
-        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "林间小路", "暂未解锁");
-        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "夜色庭院", "暂未解锁");
-        // drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, true, "Contra PVZ", "WASD +
-        // Space");
+        drawLevelCard(g, LEVEL1_X, LEVEL_CARD_Y, 1, true, "草坪保卫战", "当前可挑战");
+        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, false, "冰火森林的试炼", "暂未解锁");
+        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, false, "暗影要塞的决战", "暂未解锁");
+        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "冰火森林的试炼", "当前可挑战");
+        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "暗影要塞的决战", "当前可挑战");
 
         drawStyledButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
                 new Color(112, 112, 112), "返回首页");

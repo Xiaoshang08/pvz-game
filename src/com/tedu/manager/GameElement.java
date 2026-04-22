@@ -15,5 +15,16 @@ public enum GameElement {
     ENEMY_BULLET,
     SUN,
     UI,
-    EFFECT;
+    EFFECT,
+    // level2新增枚举值
+    MAPS,
+    FIRE_TERRAIN,
+    WATER_TERRAIN,
+    WATER_MAN,
+    FIRE_MAN,
+    FIRE_DOOR,
+    WATER_DOOR,
+    FIRE_DIAMOND,
+    WATER_DIAMOND,
+    TRAP_TERRAIN
 }

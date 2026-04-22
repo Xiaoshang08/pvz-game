@@ -124,11 +124,11 @@ public class GameInfoPanel extends ElementObj {
 
         g2.setColor(new Color(150, 226, 117));
         g2.drawString("Kills: " + board.getTotalKills() + " / " + board.getMaxZombies(), x + 340, y + 29);
-        g2.drawString("WASD/Arrow move    Space shoot    P/Esc pause", x + 520, y + 29);
+        g2.drawString("A/D move    W jump    S drop    Space shoot    P/Esc pause", x + 520, y + 29);
 
         g2.setFont(new Font("Consolas", Font.PLAIN, 13));
         g2.setColor(new Color(200, 240, 180));
-        g2.drawString("Peashooter can move freely. Zombies hurt you on contact or if they slip past.", x + 24, y + 56);
+        g2.drawString("Stand on green grass or water. Zombies hurt you on contact or if they slip past.", x + 24, y + 56);
     }
 
     private String getSelectedPlantLabel(GameBoard board) {

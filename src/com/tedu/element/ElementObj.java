@@ -23,6 +23,7 @@ public abstract class ElementObj {
     private int h;
     private ImageIcon icon;
     private boolean live = true;
+    private boolean movable = true;
 
     // level2新增属性：
 
@@ -243,12 +244,12 @@ public abstract class ElementObj {
                     return;
                 }
                 // 集齐钻石且门未开，执行开门
-                if (doorType.contains("fire") && doorObj instanceof FireDoor door) {
-                    door.setOpen(true);
+                if (doorType.contains("fire") && doorObj instanceof FireDoor) {
+                    ((FireDoor) doorObj).setOpen(true);
                     collectedDiamondCount = 0;
                     break;
-                } else if (doorType.contains("water") && doorObj instanceof WaterDoor door) {
-                    door.setOpen(true);
+                } else if (doorType.contains("water") && doorObj instanceof WaterDoor) {
+                    ((WaterDoor) doorObj).setOpen(true);
                     collectedDiamondCount = 0;
                     break;
                 }

@@ -17,6 +17,8 @@ import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 import com.tedu.util.GameImage;
 
+import com.tedu.manager.GameLoad;
+
 /**
  * GameBoard：游戏主战场背景与状态中心。
  *
@@ -112,6 +114,10 @@ public class GameBoard extends ElementObj {
     private static final int HOME_BTN_Y = 420;
     private static final int HOME_BTN_W = 190;
     private static final int HOME_BTN_H = 60;
+    private static final int NEXT_BTN_X = 545; // 下一关按钮位置
+    private static final int NEXT_BTN_Y = 500;
+    private static final int NEXT_BTN_W = 190;
+    private static final int NEXT_BTN_H = 60;
 
     private static final int PREP_PANEL_X = 40;
     private static final int PREP_PANEL_Y = 130;
@@ -153,11 +159,12 @@ public class GameBoard extends ElementObj {
     private final int gapX = 0;
     private final int gapY = 0;
     private final int lawnStartX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * LAWN_X_RATIO);
-    private final int lawnStartY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * LAWN_CENTER_Y_RATIO) - (cellH * rows) / 2;
+    private final int lawnStartY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * LAWN_CENTER_Y_RATIO)
+            - (cellH * rows) / 2;
 
     private final Plant[][] plantGrid = new Plant[rows][cols];
     private final Random random = new Random();
-    private final String[] selectablePlants = {"豌豆射手", "向日葵", "寒冰射手", "坚果墙", "双发射手", "樱桃炸弹"};
+    private final String[] selectablePlants = { "豌豆射手", "向日葵", "寒冰射手", "坚果墙", "双发射手", "樱桃炸弹" };
 
     private int zombieSpawnCounter = 0;
     private int sunDropCounter = 0;
@@ -459,8 +466,8 @@ public class GameBoard extends ElementObj {
 
         if (type == ZombiePreviewType.CONE) {
             g.setColor(new Color(242, 131, 36));
-            int[] xs = {x + 14, x + 30, x + 48};
-            int[] ys = {y + 20, y - 10, y + 20};
+            int[] xs = { x + 14, x + 30, x + 48 };
+            int[] ys = { y + 20, y - 10, y + 20 };
             g.fillPolygon(xs, ys, 3);
         } else if (type == ZombiePreviewType.BUCKET) {
             g.setColor(new Color(136, 144, 154));
@@ -482,8 +489,8 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(222, 184, 122));
         g.fillRect(x + 40, y + 46, w, h);
         g.setColor(new Color(179, 89, 62));
-        int[] roofX = {x + 20, x + 105, x + 190};
-        int[] roofY = {y + 48, y - 18, y + 48};
+        int[] roofX = { x + 20, x + 105, x + 190 };
+        int[] roofY = { y + 48, y - 18, y + 48 };
         g.fillPolygon(scalePoints(roofX, x, scale), scalePoints(roofY, y, scale), 3);
         g.setColor(new Color(130, 81, 49));
         g.fillRect((int) (x + 94 * scale), (int) (y + 98 * scale), (int) (30 * scale), (int) (60 * scale));
@@ -631,7 +638,6 @@ public class GameBoard extends ElementObj {
         }
     }
 
-
     private void updateContraMode(long gameTime) {
         if (contraPlayer != null && contraPlayer.isLive()) {
             updateContraCameraFor(contraPlayer.getX());
@@ -645,6 +651,7 @@ public class GameBoard extends ElementObj {
             }
         }
     }
+
     @Override
     public void mouseClick(int mouseX, int mouseY) {
         if (stage == GameStage.HOME) {
@@ -805,19 +812,20 @@ public class GameBoard extends ElementObj {
         spawnedZombies++;
     }
 
-
     private void spawnGunZombie() {
-        int[] lanes = {CONTRA_GROUND_Y - 82, CONTRA_GROUND_Y - 170, CONTRA_GROUND_Y - 260};
+        int[] lanes = { CONTRA_GROUND_Y - 82, CONTRA_GROUND_Y - 170, CONTRA_GROUND_Y - 260 };
         int laneIndex = random.nextInt(lanes.length);
         int spawnX = Math.min(CONTRA_MAP_W - 180, getContraCameraX() + getW() + 120 + random.nextInt(220));
         ElementManager.getManager().addElement(new GunZombie(spawnX, lanes[laneIndex]), GameElement.ZOMBIE);
         spawnedZombies++;
     }
+
     private void spawnSkySun() {
         int col = random.nextInt(cols);
         int x = getCellX(col) + (cellW - 36) / 2;
         int targetY = getCellY(random.nextInt(rows)) + 10;
-        ElementManager.getManager().addElement(Sun.createFallingSun(x, STATUS_BAR_Y + STATUS_BAR_H + 8, targetY, SKY_SUN_VALUE), GameElement.SUN);
+        ElementManager.getManager().addElement(
+                Sun.createFallingSun(x, STATUS_BAR_Y + STATUS_BAR_H + 8, targetY, SKY_SUN_VALUE), GameElement.SUN);
     }
 
     public void enterLevelSelectStage() {
@@ -987,15 +995,18 @@ public class GameBoard extends ElementObj {
     }
 
     public boolean isInLevelSelectBackButton(int mouseX, int mouseY) {
-        return inRect(mouseX, mouseY, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H);
+        return inRect(mouseX, mouseY, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W,
+                LEVEL_SELECT_BACK_H);
     }
 
     public boolean isInPauseContinueButton(int mouseX, int mouseY) {
-        return inRect(mouseX, mouseY, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W, PAUSE_CONTINUE_BTN_H);
+        return inRect(mouseX, mouseY, PAUSE_CONTINUE_BTN_X, PAUSE_CONTINUE_BTN_Y, PAUSE_CONTINUE_BTN_W,
+                PAUSE_CONTINUE_BTN_H);
     }
 
     public boolean isInPauseRestartButton(int mouseX, int mouseY) {
-        return inRect(mouseX, mouseY, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W, PAUSE_RESTART_BTN_H);
+        return inRect(mouseX, mouseY, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W,
+                PAUSE_RESTART_BTN_H);
     }
 
     public boolean isInPauseHomeButton(int mouseX, int mouseY) {
@@ -1089,20 +1100,61 @@ public class GameBoard extends ElementObj {
         }
     }
 
-    public boolean isGameStarted() { return gameStarted; }
-    public boolean isGameOver() { return gameOver; }
-    public boolean isGameWin() { return gameWin; }
-    public boolean isShovelMode() { return shovelMode; }
-    public boolean isPaused() { return paused; }
-    public boolean isInBattleStage() { return stage == GameStage.PLAYING; }
-    public int getSpawnedZombies() { return spawnedZombies; }
-    public int getMaxZombies() { return selectedLevel == 3 ? 14 : MAX_ZOMBIES; }
-    public int getCurrentSun() { return currentSun; }
-    public int getPeaShooterCost() { return PEA_SHOOTER_COST; }
-    public int getSunflowerCost() { return SUNFLOWER_COST; }
-    public PlantType getSelectedPlantType() { return selectedPlantType; }
-    public int getSelectedPlantCost() { return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST; }
-    public void addSun(int sun) { currentSun += sun; }
+    public boolean isGameStarted() {
+        return gameStarted;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public boolean isGameWin() {
+        return gameWin;
+    }
+
+    public boolean isShovelMode() {
+        return shovelMode;
+    }
+
+    public boolean isPaused() {
+        return paused;
+    }
+
+    public boolean isInBattleStage() {
+        return stage == GameStage.PLAYING;
+    }
+
+    public int getSpawnedZombies() {
+        return spawnedZombies;
+    }
+
+    public int getMaxZombies() {
+        return selectedLevel == 3 ? 14 : MAX_ZOMBIES;
+    }
+
+    public int getCurrentSun() {
+        return currentSun;
+    }
+
+    public int getPeaShooterCost() {
+        return PEA_SHOOTER_COST;
+    }
+
+    public int getSunflowerCost() {
+        return SUNFLOWER_COST;
+    }
+
+    public PlantType getSelectedPlantType() {
+        return selectedPlantType;
+    }
+
+    public int getSelectedPlantCost() {
+        return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST;
+    }
+
+    public void addSun(int sun) {
+        currentSun += sun;
+    }
 
     public Plant getPlant(int row, int col) {
         if (!isValidCell(row, col)) {
@@ -1183,7 +1235,6 @@ public class GameBoard extends ElementObj {
         return row >= 0 && row < rows && col >= 0 && col < cols;
     }
 
-
     public int getLawnLeftEdgeX() {
         return BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.105);
     }
@@ -1208,29 +1259,93 @@ public class GameBoard extends ElementObj {
         return laneTargets[row];
     }
 
-    public int getRows() { return rows; }
-    public int getCols() { return cols; }
-    public int getCellW() { return cellW; }
-    public int getCellH() { return cellH; }
-    public int getStatusBarX() { return STATUS_BAR_X; }
-    public int getStatusBarY() { return STATUS_BAR_Y; }
-    public int getStatusBarW() { return STATUS_BAR_W; }
-    public int getStatusBarH() { return STATUS_BAR_H; }
-    public int getPeaCardX() { return PEA_CARD_X; }
-    public int getPeaCardY() { return PEA_CARD_Y; }
-    public int getSunflowerCardX() { return SUNFLOWER_CARD_X; }
-    public int getSunflowerCardY() { return SUNFLOWER_CARD_Y; }
-    public int getPlantCardW() { return CARD_W; }
-    public int getPlantCardH() { return CARD_H; }
-    public int getShovelButtonX() { return SHOVEL_BTN_X; }
-    public int getShovelButtonY() { return SHOVEL_BTN_Y; }
-    public int getShovelButtonW() { return SHOVEL_BTN_W; }
-    public int getShovelButtonH() { return SHOVEL_BTN_H; }
-    public int getMenuButtonX() { return MENU_BTN_X; }
-    public int getMenuButtonY() { return MENU_BTN_Y; }
-    public int getMenuButtonW() { return MENU_BTN_W; }
-    public int getMenuButtonH() { return MENU_BTN_H; }
+    public int getRows() {
+        return rows;
+    }
 
+    public int getCols() {
+        return cols;
+    }
+
+    public int getCellW() {
+        return cellW;
+    }
+
+    public int getCellH() {
+        return cellH;
+    }
+
+    public int getStatusBarX() {
+        return STATUS_BAR_X;
+    }
+
+    public int getStatusBarY() {
+        return STATUS_BAR_Y;
+    }
+
+    public int getStatusBarW() {
+        return STATUS_BAR_W;
+    }
+
+    public int getStatusBarH() {
+        return STATUS_BAR_H;
+    }
+
+    public int getPeaCardX() {
+        return PEA_CARD_X;
+    }
+
+    public int getPeaCardY() {
+        return PEA_CARD_Y;
+    }
+
+    public int getSunflowerCardX() {
+        return SUNFLOWER_CARD_X;
+    }
+
+    public int getSunflowerCardY() {
+        return SUNFLOWER_CARD_Y;
+    }
+
+    public int getPlantCardW() {
+        return CARD_W;
+    }
+
+    public int getPlantCardH() {
+        return CARD_H;
+    }
+
+    public int getShovelButtonX() {
+        return SHOVEL_BTN_X;
+    }
+
+    public int getShovelButtonY() {
+        return SHOVEL_BTN_Y;
+    }
+
+    public int getShovelButtonW() {
+        return SHOVEL_BTN_W;
+    }
+
+    public int getShovelButtonH() {
+        return SHOVEL_BTN_H;
+    }
+
+    public int getMenuButtonX() {
+        return MENU_BTN_X;
+    }
+
+    public int getMenuButtonY() {
+        return MENU_BTN_Y;
+    }
+
+    public int getMenuButtonW() {
+        return MENU_BTN_W;
+    }
+
+    public int getMenuButtonH() {
+        return MENU_BTN_H;
+    }
 
     public int getSceneCameraOffset() {
         if (isContraMode()) {

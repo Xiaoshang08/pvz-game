@@ -10,11 +10,13 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.awt.image.BufferedImage;
 
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
+import com.tedu.manager.GameLoad;
 import com.tedu.util.GameImage;
 
 /**
@@ -229,14 +231,51 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawBattleScene(Graphics2D g) {
+        // 第二关
+        if (isFireIceMode()) {
+            drawFireIceScene(g);
+            return;
+        }
+        // 第三关
         if (isContraMode()) {
             drawContraScene(g);
             return;
         }
-
+        // 第一关
         g.setColor(new Color(221, 232, 196));
         g.fillRect(0, 0, getW(), getH());
         drawBattleEnvironment(g, getSceneCameraOffset(), battleIntroPlaying);
+    }
+
+    private void drawFireIceScene(Graphics2D g) {
+        // 调用 ElementManager 中所有地形和角色的绘制
+        // 参考后面文件 GameMainJPanel 中的绘制顺序
+        Map<GameElement, List<ElementObj>> all = em.getGameElements();
+        drawByType(all, GameElement.MAPS, g);
+        drawByType(all, GameElement.FIRE_TERRAIN, g);
+        drawByType(all, GameElement.WATER_TERRAIN, g);
+        drawByType(all, GameElement.FIRE_DOOR, g);
+        drawByType(all, GameElement.WATER_DOOR, g);
+        drawByType(all, GameElement.FIRE_DIAMOND, g);
+        drawByType(all, GameElement.WATER_DIAMOND, g);
+        drawByType(all, GameElement.TRAP_TERRAIN, g);
+        drawByType(all, GameElement.FIRE_MAN, g);
+        drawByType(all, GameElement.WATER_MAN, g);
+
+        // 显示提示消息（从 ElementManager.getTipMessage() 获取）
+        String tip = ElementManager.getManager().getTipMessage();
+        if (tip != null) {
+            g.setColor(Color.BLACK);
+            g.setFont(new Font("微软雅黑", Font.BOLD, 24));
+            g.drawString(tip, (getW() - g.getFontMetrics().stringWidth(tip)) / 2, 80);
+        }
+    }
+
+    private void drawByType(Map<GameElement, List<ElementObj>> all, GameElement type, Graphics g) {
+        for (ElementObj obj : all.get(type)) {
+            if (obj.isLive())
+                obj.showElement(g);
+        }
     }
 
     private void drawContraScene(Graphics2D g) {
@@ -533,16 +572,29 @@ public class GameBoard extends ElementObj {
     }
 
     private void drawWinOverlay(Graphics2D g) {
-        g.setColor(new Color(0, 0, 0, 120));
-        g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
+        // 增加冰火人胜利绘制
+        if (isFireIceMode()) {
+            g.setColor(new Color(0, 0, 0, 120));
+            g.fillRect(0, 0, getW(), getH());
+            g.setColor(Color.YELLOW);
+            g.setFont(new Font("Serif", Font.BOLD, 44));
+            g.drawString("恭喜通关！", 500, 300);
+            g.setColor(Color.WHITE);
+            g.drawString("森林冰火人成功获得道具", 480, 360);
+        }
+        // 非冰火人（目前只有第一关的）胜利界面
+        else {
+            g.setColor(new Color(0, 0, 0, 120));
+            g.fillRoundRect(BOARD_X, BOARD_Y, BOARD_W, BOARD_H, 28, 28);
 
-        g.setColor(new Color(241, 196, 15));
-        g.setFont(new Font("SansSerif", Font.BOLD, 44));
-        g.drawString("YOU WIN", 510, 300);
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 20));
-        g.drawString("你已经击败了全部 20 只普通僵尸！", 470, 340);
-
+            g.setColor(new Color(241, 196, 15));
+            g.setFont(new Font("SansSerif", Font.BOLD, 44));
+            g.drawString("YOU WIN", 510, 300);
+            g.setColor(Color.WHITE);
+            g.setFont(new Font("SansSerif", Font.PLAIN, 20));
+            g.drawString("你已经击败了全部 20 只普通僵尸！", 470, 340);
+        }
+        // 绘制重新开始和返回首页按钮
         drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                 new Color(46, 204, 113), "重新开始");
         drawButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
@@ -609,6 +661,11 @@ public class GameBoard extends ElementObj {
             return;
         }
 
+        if (stage == GameStage.PLAYING && isFireIceMode()) {
+            // 冰火人模式不需要额外生成逻辑，所有更新已在 GameThread 中调用各元素的 model()
+            return;
+        }
+
         if (isContraMode()) {
             updateContraMode(gameTime);
             return;
@@ -672,6 +729,14 @@ public class GameBoard extends ElementObj {
                 selectedLevel = 3;
                 startBattle();
                 return;
+            }
+            return;
+        }
+
+        if (stage == GameStage.PLAYING && isFireIceMode()) {
+            // 冰火人模式无需鼠标放置植物或铲子，只处理菜单按钮
+            if (isInMenuButton(mouseX, mouseY)) {
+                pauseGame();
             }
             return;
         }
@@ -873,7 +938,14 @@ public class GameBoard extends ElementObj {
         gameOver = false;
         gameWin = false;
         stage = GameStage.PLAYING;
-        if (isContraMode()) {
+        if (selectedLevel == 2) { // 冰火人模式
+            currentSun = 0;
+            introCameraOffset = 0;
+            battleIntroPlaying = false;
+            // 加载地图和角色
+            GameLoad.MapLoad(1); // 地图文件为 1.map
+            GameLoad.loadFireWaterMan();
+        } else if (selectedLevel == 3) {
             currentSun = 0;
             contraCameraX = 0;
             introCameraOffset = 0;
@@ -1085,12 +1157,22 @@ public class GameBoard extends ElementObj {
         if (!pressed) {
             return;
         }
-        if (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P) {
-            if (paused) {
+        if (pressed && (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P)) {
+            if (paused)
                 resumeGame();
-            } else {
+            else
                 pauseGame();
-            }
+            return;
+        }
+        // 如果在游戏中且为冰火人模式
+        if (stage == GameStage.PLAYING && isFireIceMode() && !paused && !gameOver && !gameWin) {
+            List<ElementObj> fireMen = em.getElementsByKey(GameElement.FIRE_MAN);
+            List<ElementObj> waterMen = em.getElementsByKey(GameElement.WATER_MAN);
+            for (ElementObj obj : fireMen)
+                obj.keyClick(pressed, key);
+            for (ElementObj obj : waterMen)
+                obj.keyClick(pressed, key);
+            return;
         }
     }
 
@@ -1389,6 +1471,11 @@ public class GameBoard extends ElementObj {
 
     public boolean isContraMode() {
         return stage == GameStage.PLAYING && selectedLevel == 3;
+    }
+
+    // 添加level2
+    public boolean isFireIceMode() {
+        return stage == GameStage.PLAYING && selectedLevel == 2; // 约定第2关为冰火人模式
     }
 
     public ContraPlayer getContraPlayer() {

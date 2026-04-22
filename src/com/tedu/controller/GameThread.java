@@ -1,22 +1,4 @@
-/**
- * GameThread：游戏主循环线程。
- * 主要职责：
- * 1. 初始化游戏元素；
- * 2. 驱动所有元素进行 model 更新；
- * 3. 处理子弹、僵尸、植物之间的碰撞；
- * 4. 清理死亡对象；
- * 5. 检查僵尸是否突破最左边并触发 Game Over；
- * 6. 检查 20 只僵尸是否已经全部被击败并触发胜利。
- */
-
-/**
- * 新增：根据关卡模式调用不同的碰撞检测和胜利判断。
- */
-
 package com.tedu.controller;
-
-import java.util.List;
-import java.util.Map;
 
 import com.tedu.element.Bullet;
 import com.tedu.element.ContraPeaBullet;
@@ -24,23 +6,26 @@ import com.tedu.element.ContraPlayer;
 import com.tedu.element.ElementObj;
 import com.tedu.element.EnemyBullet;
 import com.tedu.element.FireDoor;
-import com.tedu.element.GunZombie;
 import com.tedu.element.GameBoard;
+import com.tedu.element.GunZombie;
 import com.tedu.element.Plant;
 import com.tedu.element.WaterDoor;
 import com.tedu.element.Zombie;
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 import com.tedu.manager.GameLoad;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class GameThread extends Thread {
+
     private final ElementManager em;
 
     public GameThread() {
         em = ElementManager.getManager();
     }
 
-    // 游戏的帧数间隔是30
     @Override
     public void run() {
         gameLoad();
@@ -70,7 +55,13 @@ public class GameThread extends Thread {
         GameBoard board = GameBoard.getInstance();
         for (GameElement ge : GameElement.values()) {
             List<ElementObj> list = all.get(ge);
-            for (ElementObj obj : list) {
+            if (list == null) {
+                continue;
+            }
+
+            // ========== 修复点 1：创建副本遍历，防止并发修改 ==========
+            List<ElementObj> tempList = new ArrayList<>(list);
+            for (ElementObj obj : tempList) {
                 if (!obj.isLive()) {
                     continue;
                 }
@@ -91,7 +82,6 @@ public class GameThread extends Thread {
         }
 
         if (board.isFireIceMode()) {
-            // 冰火人模式的胜利检测放在这里，因为需要检查门的状态
             checkFireIceWin();
             return;
         }
@@ -105,12 +95,12 @@ public class GameThread extends Thread {
         List<ElementObj> zombies = em.getElementsByKey(GameElement.ZOMBIE);
         List<ElementObj> plants = em.getElementsByKey(GameElement.PLANT);
 
-        for (ElementObj bulletObj : bullets) {
+        for (ElementObj bulletObj : new ArrayList<>(bullets)) {
             if (!bulletObj.isLive()) {
                 continue;
             }
             Bullet bullet = (Bullet) bulletObj;
-            for (ElementObj zombieObj : zombies) {
+            for (ElementObj zombieObj : new ArrayList<>(zombies)) {
                 if (!zombieObj.isLive()) {
                     continue;
                 }
@@ -126,13 +116,13 @@ public class GameThread extends Thread {
             }
         }
 
-        for (ElementObj zombieObj : zombies) {
+        for (ElementObj zombieObj : new ArrayList<>(zombies)) {
             if (!zombieObj.isLive()) {
                 continue;
             }
             Zombie zombie = (Zombie) zombieObj;
             Plant targetPlant = null;
-            for (ElementObj plantObj : plants) {
+            for (ElementObj plantObj : new ArrayList<>(plants)) {
                 if (!plantObj.isLive()) {
                     continue;
                 }
@@ -151,17 +141,20 @@ public class GameThread extends Thread {
 
     private void checkFireIceWin() {
         GameBoard board = GameBoard.getInstance();
-        if (board.isGameWin() || board.isGameOver())
+        if (board.isGameWin() || board.isGameOver()) {
             return;
+        }
 
         boolean fireDoorOpen = false, waterDoorOpen = false;
-        for (ElementObj door : em.getElementsByKey(GameElement.FIRE_DOOR)) {
-            if (((FireDoor) door).isOpen())
+        for (ElementObj door : new ArrayList<>(em.getElementsByKey(GameElement.FIRE_DOOR))) {
+            if (((FireDoor) door).isOpen()) {
                 fireDoorOpen = true;
+            }
         }
-        for (ElementObj door : em.getElementsByKey(GameElement.WATER_DOOR)) {
-            if (((WaterDoor) door).isOpen())
+        for (ElementObj door : new ArrayList<>(em.getElementsByKey(GameElement.WATER_DOOR))) {
+            if (((WaterDoor) door).isOpen()) {
                 waterDoorOpen = true;
+            }
         }
         if (fireDoorOpen && waterDoorOpen) {
             board.triggerGameWin();
@@ -174,12 +167,12 @@ public class GameThread extends Thread {
         List<ElementObj> zombies = em.getElementsByKey(GameElement.ZOMBIE);
         ContraPlayer player = board.getContraPlayer();
 
-        for (ElementObj bulletObj : bullets) {
+        for (ElementObj bulletObj : new ArrayList<>(bullets)) {
             if (!bulletObj.isLive() || !(bulletObj instanceof ContraPeaBullet)) {
                 continue;
             }
             ContraPeaBullet bullet = (ContraPeaBullet) bulletObj;
-            for (ElementObj zombieObj : zombies) {
+            for (ElementObj zombieObj : new ArrayList<>(zombies)) {
                 if (!zombieObj.isLive() || !(zombieObj instanceof GunZombie)) {
                     continue;
                 }
@@ -196,7 +189,7 @@ public class GameThread extends Thread {
             return;
         }
 
-        for (ElementObj bulletObj : enemyBullets) {
+        for (ElementObj bulletObj : new ArrayList<>(enemyBullets)) {
             if (!bulletObj.isLive() || !(bulletObj instanceof EnemyBullet)) {
                 continue;
             }
@@ -207,7 +200,7 @@ public class GameThread extends Thread {
             }
         }
 
-        for (ElementObj zombieObj : zombies) {
+        for (ElementObj zombieObj : new ArrayList<>(zombies)) {
             if (!zombieObj.isLive() || !(zombieObj instanceof GunZombie)) {
                 continue;
             }
@@ -220,26 +213,26 @@ public class GameThread extends Thread {
     }
 
     private void cleanupDead(Map<GameElement, List<ElementObj>> all) {
-        // 1. 通用清理：移除所有标记为死亡的元素
         for (GameElement ge : GameElement.values()) {
             List<ElementObj> list = all.get(ge);
-            for (int i = 0; i < list.size();) {
+            if (list == null) {
+                continue;
+            }
+
+            // ========== 修复点 2：安全倒序删除 ==========
+            for (int i = list.size() - 1; i >= 0; i--) {
                 ElementObj obj = list.get(i);
                 if (!obj.isLive()) {
                     obj.die();
                     list.remove(i);
-                } else {
-                    i++;
                 }
             }
         }
-        // 2. 植物大战僵尸模式特有的格子清理（原有代码）
+
         GameBoard board = GameBoard.getInstance();
         if (board != null) {
             board.cleanupPlantSlots();
         }
-        // 3. 冰火人模式：不检查角色死亡，不触发游戏结束
-        // 胜利条件已在 checkFireIceWin() 中通过门的状态判断
     }
 
     private void checkGameOver() {
@@ -249,7 +242,7 @@ public class GameThread extends Thread {
         }
 
         List<ElementObj> zombies = em.getElementsByKey(GameElement.ZOMBIE);
-        for (ElementObj zombieObj : zombies) {
+        for (ElementObj zombieObj : new ArrayList<>(zombies)) {
             Zombie zombie = (Zombie) zombieObj;
             if (zombie.isLive() && zombie.hasEnteredHouse()) {
                 board.triggerGameOver();
@@ -269,7 +262,7 @@ public class GameThread extends Thread {
         }
 
         List<ElementObj> zombies = em.getElementsByKey(GameElement.ZOMBIE);
-        for (ElementObj zombieObj : zombies) {
+        for (ElementObj zombieObj : new ArrayList<>(zombies)) {
             if (zombieObj.isLive()) {
                 return;
             }

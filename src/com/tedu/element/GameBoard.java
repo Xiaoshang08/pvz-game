@@ -196,7 +196,7 @@ public class GameBoard extends ElementObj {
     private boolean battleIntroPlaying = false;
     private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
-    private int unlockedLevel = 1; // 改为从1开始
+    private int unlockedLevel = 3; // 改为从1开始
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
@@ -854,7 +854,7 @@ public class GameBoard extends ElementObj {
         drawStyledButton(g, PAUSE_RESTART_BTN_X, PAUSE_RESTART_BTN_Y, PAUSE_RESTART_BTN_W, PAUSE_RESTART_BTN_H,
                 new Color(243, 156, 18), "重新开始");
         drawStyledButton(g, PAUSE_HOME_BTN_X, PAUSE_HOME_BTN_Y, PAUSE_HOME_BTN_W, PAUSE_HOME_BTN_H,
-                new Color(52, 152, 219), "返回首页");
+                new Color(52, 152, 219), "返回选关");
         drawStyledButton(g, PAUSE_EXIT_BTN_X, PAUSE_EXIT_BTN_Y, PAUSE_EXIT_BTN_W, PAUSE_EXIT_BTN_H,
                 new Color(86, 86, 86), "退出游戏");
     }
@@ -889,7 +889,7 @@ public class GameBoard extends ElementObj {
         drawStyledButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                 new Color(46, 204, 113), "重新开始");
         drawStyledButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
-                new Color(52, 152, 219), "返回首页");
+                new Color(52, 152, 219), "返回选关");
     }
 
     private void drawGameOverOverlay(Graphics2D g) {
@@ -900,7 +900,7 @@ public class GameBoard extends ElementObj {
             drawButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                     new Color(243, 156, 18), "重新开始");
             drawButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
-                    new Color(52, 152, 219), "返回首页");
+                    new Color(52, 152, 219), "返回选关");
             return;
         }
         g.setColor(new Color(0, 0, 0, 130));
@@ -916,7 +916,7 @@ public class GameBoard extends ElementObj {
         drawStyledButton(g, RESTART_BTN_X, RESTART_BTN_Y, RESTART_BTN_W, RESTART_BTN_H,
                 new Color(243, 156, 18), "重新开始");
         drawStyledButton(g, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H,
-                new Color(52, 152, 219), "返回首页");
+                new Color(52, 152, 219), "返回选关");
     }
 
     private void drawStyledButton(Graphics2D g, int x, int y, int w, int h, Color baseColor, String text) {
@@ -1111,8 +1111,8 @@ public class GameBoard extends ElementObj {
                     restartGame();
                     return;
                 }
-                if (isInHomeButton(mouseX, mouseY)) {
-                    returnToHome();
+                if (isInLevelSelectButton(mouseX, mouseY)) {
+                    returnToLevelSelect();
                     return;
                 }
                 return;
@@ -1130,8 +1130,8 @@ public class GameBoard extends ElementObj {
                     restartGame();
                     return;
                 }
-                if (isInPauseHomeButton(mouseX, mouseY)) {
-                    returnToHome();
+                if (isInPauseLevelSelectButton(mouseX, mouseY)) {
+                    returnToLevelSelect();
                     return;
                 }
                 if (isInPauseExitButton(mouseX, mouseY)) {
@@ -1167,8 +1167,8 @@ public class GameBoard extends ElementObj {
                 restartGame();
                 return;
             }
-            if (isInPauseHomeButton(mouseX, mouseY)) {
-                returnToHome();
+            if (isInPauseLevelSelectButton(mouseX, mouseY)) {
+                returnToLevelSelect();
                 return;
             }
             if (isInPauseExitButton(mouseX, mouseY)) {
@@ -1182,8 +1182,8 @@ public class GameBoard extends ElementObj {
                 restartGame();
                 return;
             }
-            if (isInHomeButton(mouseX, mouseY)) {
-                returnToHome();
+            if (isInLevelSelectButton(mouseX, mouseY)) {
+                returnToLevelSelect();
             }
             return;
         }
@@ -1474,6 +1474,32 @@ public class GameBoard extends ElementObj {
         // 注意：不清空 storyPlayed 和 levelTipShown，保持玩家进度
     }
 
+    public void returnToLevelSelect() {
+        clearDynamicElements();
+        clearPlantGrid();
+        totalKills = 0;
+        spawnedZombies = 0;
+        zombieSpawnCounter = 0;
+        sunDropCounter = 0;
+        startProtectCounter = 0;
+        currentSun = INITIAL_SUN;
+        shovelMode = false;
+        paused = false;
+        selectedPlantType = PlantType.PEA_SHOOTER;
+        gameStarted = false;
+        gameOver = false;
+        gameWin = false;
+        stage = GameStage.LEVEL_SELECT;
+        prepCameraOffset = 0;
+        introCameraOffset = 0;
+        battleIntroPlaying = false;
+        introZombieRetreatOffset = 0;
+        contraCameraX = 0;
+        contraBossSpawned = false;
+        contraBossDefeated = false;
+        winMessage = null;
+    }
+
     public void triggerGameOver() {
         if (stage != GameStage.PLAYING || !gameStarted || gameWin)
             return;
@@ -1583,6 +1609,14 @@ public class GameBoard extends ElementObj {
 
     public boolean isInHomeButton(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H);
+    }
+
+    public boolean isInLevelSelectButton(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, HOME_BTN_X, HOME_BTN_Y, HOME_BTN_W, HOME_BTN_H);
+    }
+
+    public boolean isInPauseLevelSelectButton(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, PAUSE_HOME_BTN_X, PAUSE_HOME_BTN_Y, PAUSE_HOME_BTN_W, PAUSE_HOME_BTN_H);
     }
 
     public boolean isInStatusBar(int mouseX, int mouseY) {

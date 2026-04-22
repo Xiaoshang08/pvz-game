@@ -1,0 +1,56 @@
+package com.tedu.element;
+
+import com.tedu.manager.GameLoad;
+import javax.swing.ImageIcon;
+import java.awt.Graphics;
+
+public class WaterMan extends ElementObj {
+
+    @Override
+    public void showElement(Graphics g) {
+        g.drawImage(this.getIcon().getImage(), this.getX(), this.getY(), this.getW(), this.getH(), null);
+    }
+
+    @Override
+    public void keyClick(boolean pressed, int keyCode) {
+        switch (keyCode) {
+            case 37: left = pressed; break;
+            case 39: right = pressed; break;
+            case 38:
+                if (pressed && isOnGround) {
+                    vy = JUMP_VELOCITY;
+                    isOnGround = false;
+                }
+                break;
+        }
+    }
+
+    @Override
+    public ElementObj createElement(String str) {
+        String[] split = str.split(",");
+        setX(Integer.parseInt(split[0]));
+        setY(Integer.parseInt(split[1]));
+        ImageIcon icon = GameLoad.imgMap.get("water_man");
+        setIcon(icon);
+        setW(icon.getIconWidth());
+        setH(icon.getIconHeight());
+        setRoleType("water");
+        moveSpeed = 5;
+        setMovable(true);
+        setRequiredDiamondCount(getRequiredDiamondCount());
+        return this;
+    }
+
+    @Override
+    protected int getSpawnX() { return 64; }
+    @Override
+    protected int getSpawnY() { return 448; }
+    @Override
+    protected String getDiamondRoleType() { return "water_diamond"; }
+    @Override
+    protected String getDoorRoleType() { return "water_door"; }
+    @Override
+    protected String getDeathTerrainRoleType() { return "fire_terrain"; }
+    @Override
+    protected int getRequiredDiamondCount() { return 3; }
+}

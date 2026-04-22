@@ -628,10 +628,10 @@ public class GameBoard extends ElementObj {
         g.drawString("选择关卡", 550, 150);
 
         drawLevelCard(g, LEVEL1_X, LEVEL_CARD_Y, 1, true, "草坪保卫战", "当前可挑战");
-        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, false, "冰火森林的试炼", "暂未解锁");
-        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, false, "暗影要塞的决战", "暂未解锁");
-        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "冰火森林的试炼", "当前可挑战");
-        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "暗影要塞的决战", "当前可挑战");
+        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, false, "冰火森林", "当前可挑战");
+        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, false, "暗影要塞", "当前可挑战");
+        drawLevelCard(g, LEVEL2_X, LEVEL_CARD_Y, 2, unlockedLevel >= 2, "冰火森林", "暂未解锁");
+        drawLevelCard(g, LEVEL3_X, LEVEL_CARD_Y, 3, unlockedLevel >= 3, "暗影要塞", "暂未解锁");
 
         drawStyledButton(g, LEVEL_SELECT_BACK_X, LEVEL_SELECT_BACK_Y, LEVEL_SELECT_BACK_W, LEVEL_SELECT_BACK_H,
                 new Color(112, 112, 112), "返回首页");

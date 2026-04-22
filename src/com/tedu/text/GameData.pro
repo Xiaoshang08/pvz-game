@@ -1,0 +1,10 @@
+fire_man=fire_man.png
+water_man=water_man.png
+fire_terrain=fire_terrain.png
+water_terrain=water_terrain.png
+normal_terrain=normal_terrain.png
+door_open=door_open.png
+door_close=door_close.png
+fire_diamond=fire_diamond.png
+water_diamond=water_diamond.png
+trap_terrain=trap_terrain.png

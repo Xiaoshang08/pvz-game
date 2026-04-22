@@ -1,0 +1,10 @@
+fire_man=com.tedu.element.FireMan
+water_man=com.tedu.element.WaterMan
+fire_terrain=com.tedu.element.FireTerrain
+water_terrain=com.tedu.element.WaterTerrain
+normal_terrain=com.tedu.element.NormalTerrain
+fire_door=com.tedu.element.FireDoor
+water_door=com.tedu.element.WaterDoor
+fire_diamond=com.tedu.element.FireDiamond
+water_diamond=com.tedu.element.WaterDiamond
+trap_terrain=com.tedu.element.TrapTerrain

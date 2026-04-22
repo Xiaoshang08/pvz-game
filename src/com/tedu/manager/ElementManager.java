@@ -14,7 +14,7 @@ import com.tedu.element.ElementObj;
 
 public class ElementManager {
     private Map<GameElement, List<ElementObj>> gameElements;
-    private static ElementManager EM;
+    private static ElementManager EM = null;
 
     public static synchronized ElementManager getManager() {
         if (EM == null) {
@@ -46,5 +46,34 @@ public class ElementManager {
 
     public Map<GameElement, List<ElementObj>> getGameElements() {
         return gameElements;
+    }
+
+    // level2新增:
+    // 提示消息相关
+    private String tipMessage = null;
+    private long tipExpireTime = 0;
+
+    /**
+     * 显示一条临时提示消息（在屏幕上停留 durationMs 毫秒）
+     * 
+     * @param msg        提示内容
+     * @param durationMs 持续时间（毫秒）
+     */
+    public void showTip(String msg, int durationMs) {
+        this.tipMessage = msg;
+        this.tipExpireTime = System.currentTimeMillis() + durationMs;
+    }
+
+    /**
+     * 获取当前待显示的提示消息（若已过期则返回 null）
+     * 
+     * @return 提示消息或 null
+     */
+    public String getTipMessage() {
+        if (tipMessage != null && System.currentTimeMillis() < tipExpireTime) {
+            return tipMessage;
+        }
+        tipMessage = null;
+        return null;
     }
 }

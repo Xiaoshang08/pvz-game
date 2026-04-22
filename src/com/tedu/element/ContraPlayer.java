@@ -17,6 +17,7 @@ public class ContraPlayer extends ElementObj {
     private static final double JUMP_SPEED = -15.0;
     private static final double MAX_FALL_SPEED = 15.0;
     private static final int DROP_IGNORE_HEIGHT = 18;
+    private static final int MAX_JUMPS = 2;
     private static final int SHOOT_COOLDOWN = 8;
     private static final int HIT_COOLDOWN = 35;
 
@@ -28,6 +29,7 @@ public class ContraPlayer extends ElementObj {
     private boolean dropRequested;
     private double verticalSpeed;
     private boolean onGround;
+    private int jumpsUsed;
     private int health = 10;
     private int shootCooldown;
     private int hitCooldown;
@@ -115,6 +117,11 @@ public class ContraPlayer extends ElementObj {
         int rightFoot = getX() + getW() - 8;
         int footY = getY() + getH();
         onGround = board.isOnContraSurface(leftFoot, rightFoot, footY);
+        if (onGround) {
+            jumpsUsed = 0;
+        } else if (jumpsUsed == 0) {
+            jumpsUsed = 1;
+        }
 
         if (dropRequested) {
             int nextSurface = board.getContraSurfaceBelow(leftFoot, rightFoot, footY + DROP_IGNORE_HEIGHT);
@@ -122,14 +129,16 @@ public class ContraPlayer extends ElementObj {
                 setY(getY() + DROP_IGNORE_HEIGHT);
                 verticalSpeed = Math.max(verticalSpeed, 4.0);
                 onGround = false;
+                jumpsUsed = 1;
             }
             dropRequested = false;
         }
 
         if (jumpRequested) {
-            if (onGround) {
+            if (onGround || jumpsUsed < MAX_JUMPS) {
                 verticalSpeed = JUMP_SPEED;
                 onGround = false;
+                jumpsUsed++;
             }
             jumpRequested = false;
         }
@@ -154,6 +163,8 @@ public class ContraPlayer extends ElementObj {
                 setY(surfaceY - getH());
                 verticalSpeed = 0;
                 onGround = true;
+                jumpsUsed = 0;
+                checkContraWaterDeath(board);
                 return;
             }
         }
@@ -161,6 +172,18 @@ public class ContraPlayer extends ElementObj {
         setY(nextY);
         if (onGround && !board.isOnContraSurface(leftFoot, rightFoot, getY() + getH())) {
             onGround = false;
+            if (jumpsUsed == 0) {
+                jumpsUsed = 1;
+            }
+        }
+        checkContraWaterDeath(board);
+    }
+
+    private void checkContraWaterDeath(GameBoard board) {
+        if (board.isContraWaterHazard(getX() + 8, getX() + getW() - 8, getY() + getH() - 8, getY() + getH())) {
+            health = 0;
+            setLive(false);
+            board.triggerGameOver();
         }
     }
 

@@ -8,13 +8,16 @@ public class ContraPeaBullet extends ElementObj {
     private static final int DAMAGE = 1;
 
     public ContraPeaBullet(int x, int y) {
-        super(x, y, 18, 14, null);
+        super(x, y, 24, 20, null);
     }
 
     @Override
     public void showElement(Graphics g) {
         GameBoard board = GameBoard.getInstance();
         int drawX = board == null ? getX() : board.toScreenX(getX());
+        if (PeaBulletSprite.draw(g, drawX, getY(), getW(), getH())) {
+            return;
+        }
         g.setColor(new Color(90, 235, 74));
         g.fillOval(drawX, getY(), getW(), getH());
         g.setColor(new Color(28, 126, 35));

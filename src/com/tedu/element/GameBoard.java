@@ -127,6 +127,7 @@ public class GameBoard extends ElementObj {
     private static final int PREP_BACK_BTN_H = 42;
 
     private static final int MAX_ZOMBIES = 20;
+    private static final int CONTRA_MAX_ZOMBIES = 18;
     private static final int PEA_SHOOTER_COST = 100;
     private static final int SUNFLOWER_COST = 50;
     private static final int INITIAL_SUN = 100;
@@ -146,6 +147,9 @@ public class GameBoard extends ElementObj {
     private static final int CONTRA_SURFACE_SEARCH_BOTTOM = CONTRA_MAP_Y + CONTRA_MAP_H - 18;
     private static final int CONTRA_SPAWN_START_X = 760;
     private static final int CONTRA_SPAWN_END_MARGIN = 520;
+    private static final int CONTRA_EXIT_LEFT_X = 3218 * CONTRA_SCALE;
+    private static final int CONTRA_EXIT_TOP_Y = CONTRA_MAP_Y + 54 * CONTRA_SCALE;
+    private static final int CONTRA_EXIT_BOTTOM_Y = CONTRA_MAP_Y + 184 * CONTRA_SCALE;
     private final BufferedImage battleSceneImage = GameImage.get(BATTLE_SCENE_IMAGE_PATH);
     private final BufferedImage contraStageImage = GameImage.get(CONTRA_STAGE_IMAGE_PATH);
 
@@ -810,14 +814,12 @@ public class GameBoard extends ElementObj {
 
 
     private void spawnGunZombie() {
-        int spawnX = chooseContraZombieSpawnX();
-        int surfaceY = getContraSurfaceBelow(spawnX + 8, spawnX + 48, CONTRA_TOP_Y);
-        int spawnY = surfaceY == -1 ? CONTRA_GROUND_Y - 82 : surfaceY - 82;
-        ElementManager.getManager().addElement(new GunZombie(spawnX, spawnY), GameElement.ZOMBIE);
+        int[] spawnPoint = chooseContraZombieSpawnPoint();
+        ElementManager.getManager().addElement(new GunZombie(spawnPoint[0], spawnPoint[1] - 82), GameElement.ZOMBIE);
         spawnedZombies++;
     }
 
-    private int chooseContraZombieSpawnX() {
+    private int[] chooseContraZombieSpawnPoint() {
         int spawnableWidth = Math.max(1, CONTRA_MAP_W - CONTRA_SPAWN_START_X - CONTRA_SPAWN_END_MARGIN);
         double progress = getMaxZombies() <= 1 ? 0.0 : (double) spawnedZombies / (getMaxZombies() - 1);
         int baseX = CONTRA_SPAWN_START_X + (int) Math.round(spawnableWidth * progress);
@@ -826,14 +828,58 @@ public class GameBoard extends ElementObj {
         int maxX = CONTRA_MAP_W - CONTRA_SPAWN_END_MARGIN;
         int candidateX = clamp(baseX + jitter, minX, maxX);
 
-        for (int i = 0; i < 16; i++) {
-            int surfaceY = getContraSurfaceBelow(candidateX + 8, candidateX + 48, CONTRA_TOP_Y);
+        for (int i = 0; i < 28; i++) {
+            List<Integer> surfaces = getContraSurfacesAt(candidateX + 8, candidateX + 48);
+            int surfaceY = chooseContraSpawnSurface(surfaces);
             if (surfaceY != -1) {
-                return candidateX;
+                return new int[]{candidateX, surfaceY};
             }
             candidateX = clamp(candidateX + 180 + random.nextInt(260), minX, maxX);
         }
-        return candidateX;
+
+        int surfaceY = getContraSurfaceBelow(candidateX + 8, candidateX + 48, CONTRA_TOP_Y);
+        return new int[]{candidateX, surfaceY == -1 ? CONTRA_GROUND_Y : surfaceY};
+    }
+
+    private int chooseContraSpawnSurface(List<Integer> surfaces) {
+        if (surfaces.isEmpty()) {
+            return -1;
+        }
+
+        int spawnPattern = spawnedZombies % 5;
+        int preferred = chooseSurfaceInSourceYRange(surfaces, spawnPattern == 0 || spawnPattern == 2 ? 154 : 118,
+                spawnPattern == 0 || spawnPattern == 2 ? 218 : 154);
+        if (preferred != -1) {
+            return preferred;
+        }
+
+        return surfaces.get(random.nextInt(surfaces.size()));
+    }
+
+    private int chooseSurfaceInSourceYRange(List<Integer> surfaces, int minSourceY, int maxSourceY) {
+        List<Integer> candidates = new ArrayList<Integer>();
+        for (Integer surfaceY : surfaces) {
+            int srcY = (surfaceY - CONTRA_MAP_Y) / CONTRA_SCALE;
+            if (srcY >= minSourceY && srcY <= maxSourceY) {
+                candidates.add(surfaceY);
+            }
+        }
+        if (candidates.isEmpty()) {
+            return -1;
+        }
+        return candidates.get(random.nextInt(candidates.size()));
+    }
+
+    private List<Integer> getContraSurfacesAt(int leftWorldX, int rightWorldX) {
+        List<Integer> surfaces = new ArrayList<Integer>();
+        int lastSurfaceY = -100;
+        for (int worldY = CONTRA_TOP_Y; worldY <= CONTRA_SURFACE_SEARCH_BOTTOM; worldY++) {
+            if (hasContraSurfaceAt(leftWorldX, rightWorldX, worldY) && worldY - lastSurfaceY > 18) {
+                surfaces.add(worldY);
+                lastSurfaceY = worldY;
+            }
+        }
+        return surfaces;
     }
     private void spawnSkySun() {
         int col = random.nextInt(cols);
@@ -1121,7 +1167,7 @@ public class GameBoard extends ElementObj {
     public boolean isPaused() { return paused; }
     public boolean isInBattleStage() { return stage == GameStage.PLAYING; }
     public int getSpawnedZombies() { return spawnedZombies; }
-    public int getMaxZombies() { return selectedLevel == 3 ? 14 : MAX_ZOMBIES; }
+    public int getMaxZombies() { return selectedLevel == 3 ? CONTRA_MAX_ZOMBIES : MAX_ZOMBIES; }
     public int getCurrentSun() { return currentSun; }
     public int getPeaShooterCost() { return PEA_SHOOTER_COST; }
     public int getSunflowerCost() { return SUNFLOWER_COST; }
@@ -1295,6 +1341,17 @@ public class GameBoard extends ElementObj {
         return CONTRA_TOP_Y;
     }
 
+    public boolean isContraPlayerInExit() {
+        if (contraPlayer == null || !contraPlayer.isLive()) {
+            return false;
+        }
+        int centerX = contraPlayer.getX() + contraPlayer.getW() / 2;
+        int centerY = contraPlayer.getY() + contraPlayer.getH() / 2;
+        return centerX >= CONTRA_EXIT_LEFT_X
+                && centerY >= CONTRA_EXIT_TOP_Y
+                && centerY <= CONTRA_EXIT_BOTTOM_Y;
+    }
+
     public int getContraSurfaceBelow(int leftWorldX, int rightWorldX, int fromWorldY) {
         return getContraSurfaceBetween(leftWorldX, rightWorldX, fromWorldY, CONTRA_SURFACE_SEARCH_BOTTOM);
     }
@@ -1366,9 +1423,43 @@ public class GameBoard extends ElementObj {
         int r = color.getRed();
         int g = color.getGreen();
         int b = color.getBlue();
-        boolean grass = srcY >= 88 && g >= 115 && g > r + 35 && g > b + 35 && r <= 150 && b <= 120;
-        boolean water = srcY >= 128 && b >= 145 && g >= 70 && r <= 85;
-        return grass || water;
+        return srcY >= 88 && g >= 115 && g > r + 35 && g > b + 35 && r <= 150 && b <= 120;
+    }
+
+    public boolean isContraWaterHazard(int leftWorldX, int rightWorldX, int topWorldY, int bottomWorldY) {
+        if (contraStageImage == null) {
+            return false;
+        }
+
+        int[] sampleXs = {
+                leftWorldX,
+                leftWorldX + Math.max(1, (rightWorldX - leftWorldX) / 2),
+                rightWorldX
+        };
+        int startY = Math.max(CONTRA_MAP_Y, topWorldY);
+        int endY = Math.min(CONTRA_MAP_Y + CONTRA_MAP_H - 1, bottomWorldY);
+        for (int worldY = startY; worldY <= endY; worldY += 6) {
+            for (int worldX : sampleXs) {
+                if (isContraWaterPixel(worldX, worldY)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isContraWaterPixel(int worldX, int worldY) {
+        int srcX = worldX / CONTRA_SCALE;
+        int srcY = (worldY - CONTRA_MAP_Y) / CONTRA_SCALE;
+        if (srcX < 0 || srcX >= contraStageImage.getWidth() || srcY < 0 || srcY >= contraStageImage.getHeight()) {
+            return false;
+        }
+
+        Color color = new Color(contraStageImage.getRGB(srcX, srcY), true);
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
+        return srcY >= 128 && b >= 145 && g >= 70 && r <= 85;
     }
 
     private int clamp(int value, int min, int max) {

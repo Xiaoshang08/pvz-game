@@ -239,6 +239,9 @@ public class GameThread extends Thread {
                 return;
             }
         }
+        if (board.isContraMode() && !board.isContraPlayerInExit()) {
+            return;
+        }
         board.triggerGameWin();
     }
 }

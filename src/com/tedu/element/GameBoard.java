@@ -211,7 +211,7 @@ public class GameBoard extends ElementObj {
     private boolean battleIntroPlaying = false;
     private int introZombieRetreatOffset = 0;
     private int prepSelectedIndex = 0;
-    private int unlockedLevel = 3; // 改为从1开始
+    private int unlockedLevel = 1; // 改为从1开始
     private int selectedLevel = 1;
     private ContraPlayer contraPlayer;
     private int contraCameraX = 0;
@@ -783,7 +783,6 @@ public class GameBoard extends ElementObj {
             g.setFont(new Font("SansSerif", Font.PLAIN, 13));
             g.drawString("可用", x + 14, y + 48);
         }
-
 
         drawStyledButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
                 new Color(86, 164, 63), "开始战斗");

@@ -11,7 +11,6 @@ import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +61,8 @@ public class GameBoard extends ElementObj {
     private static final int PEA_CARD_Y = 17;
     private static final int SUNFLOWER_CARD_X = 288;
     private static final int SUNFLOWER_CARD_Y = 17;
+    private static final int DOUBLE_PEA_CARD_X = 450;
+    private static final int DOUBLE_PEA_CARD_Y = 17;
     private static final int SHOVEL_BTN_X = 1130;
     private static final int SHOVEL_BTN_Y = 652;
     private static final int SHOVEL_BTN_W = 118;
@@ -140,9 +141,16 @@ public class GameBoard extends ElementObj {
     private static final int SUNFLOWER_COST = 50;
     private static final int INITIAL_SUN = 100;
     private static final int SKY_SUN_VALUE = 50;
-    private static final int SUN_DROP_INTERVAL = 167;
+    private static final int SUN_DROP_INTERVAL = 267;
     private static final int ZOMBIE_SPAWN_INTERVAL = 150;
     private static final int START_PROTECT_TIME = 167;
+    private static final int LEVEL1_ROADBLOCK_UNLOCK_AFTER = 5;
+    private static final int LEVEL1_BUCKET_UNLOCK_AFTER = 10;
+    private static final int LEVEL1_ROADBLOCK_MAX = 5;
+    private static final int LEVEL1_BUCKET_MAX = 3;
+    private static final int LEVEL3_ROADBLOCK_MAX = 2;
+    private static final double LEVEL1_ROADBLOCK_CHANCE = 0.35;
+    private static final double LEVEL1_BUCKET_CHANCE = 0.25;
 
     private static final String BATTLE_SCENE_IMAGE_PATH = "images/map/lawn_scene.png";
     private static final String CONTRA_STAGE_IMAGE_PATH = "images/map/contra_stage.png";
@@ -181,15 +189,15 @@ public class GameBoard extends ElementObj {
     private final String[] selectablePlants = Arrays.stream(PlantType.values())
             .map(PlantType::getDisplayName)
             .toArray(String[]::new);
-    private final List<LawnZombieSpawner> lawnZombieSpawners = Collections.singletonList(Zombie::new);
-    private final List<ContraZombieSpawner> contraZombieSpawners = Collections.singletonList(
-            (x, surfaceY) -> new GunZombie(x, surfaceY - 82));
 
     private int zombieSpawnCounter = 0;
     private int sunDropCounter = 0;
     private int startProtectCounter = 0;
     private int totalKills = 0;
     private int spawnedZombies = 0;
+    private int lawnRoadblockSpawned = 0;
+    private int lawnBucketSpawned = 0;
+    private int contraRoadblockSpawned = 0;
     private int currentSun = INITIAL_SUN;
     private boolean gameStarted = false;
     private boolean gameOver = false;
@@ -245,14 +253,14 @@ public class GameBoard extends ElementObj {
             // 第二关玩法
             "玩法：\n• 控制角色在冰面/火地上移动\n• 收集冰之精魄和火之精魄\n• 避开陷阱，注意冰冻、火焰和毒液伤害",
             // 第三关玩法
-            "玩法：\n• 点击空格射击\n• 击败洪粤贤\n• 躲避敌人子弹幕\n• 击败 boss 后进入最右侧基地"
+            "玩法：\n• 点击空格射击\n• 按 F 使用第二关获得的双发道具，持续约 10 秒\n• 击败洪粤贤\n• 躲避敌人子弹幕\n• 击败 boss 后进入最右侧基地"
     };
     private final String[] winMessages = {
             "打得漂亮！不过红月仙不会善罢甘休……",
             "冰火融合！现在弹弓有了元素之力，去给他点颜色看看。",
             null // 第三关胜利后不显示普通胜利界面，直接播放结局
     };
-    private final String endingText = "红月仙：“你……究竟是谁？”\n\n我：“只是一个不想让森林哭泣的人。”";
+    private final String endingText = "恭喜你成功通关！\n\n暗影要塞已经被攻破，森林重新迎来了光亮。\n\n感谢你的参与，感谢你一路守护这片草坪与森林伙伴。";
 
     public GameBoard() {
         instance = this;
@@ -275,19 +283,10 @@ public class GameBoard extends ElementObj {
         Plant create(int row, int col, int x, int y, int w, int h);
     }
 
-    @FunctionalInterface
-    private interface LawnZombieSpawner {
-        Zombie create(int row, int x, int y);
-    }
-
-    @FunctionalInterface
-    private interface ContraZombieSpawner {
-        GunZombie create(int x, int surfaceY);
-    }
-
     public enum PlantType {
         PEA_SHOOTER("豌豆射手", 100, PeaShooter::new),
-        SUNFLOWER("向日葵", 50, Sunflower::new);
+        SUNFLOWER("向日葵", 50, Sunflower::new),
+        DOUBLE_PEA_SHOOTER("双发豌豆", 200, DoublePeaShooter::new);
 
         private final String displayName;
         private final int cost;
@@ -441,17 +440,21 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(0, 0, 0, 220));
         g.fillRect(0, 0, getW(), getH());
 
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 26));
+        g.setColor(new Color(255, 236, 160));
+        g.setFont(new Font("Microsoft YaHei", Font.BOLD, 30));
         String[] lines = endingText.split("\n");
-        int lineY = getH() / 2 - 50;
+        int lineY = getH() / 2 - 70;
         for (String line : lines) {
             FontMetrics fm = g.getFontMetrics();
             int textWidth = fm.stringWidth(line);
             int x = (getW() - textWidth) / 2;
             g.drawString(line, x, lineY);
-            lineY += 40;
+            lineY += 56;
         }
+
+        g.setFont(new Font("Microsoft YaHei", Font.PLAIN, 16));
+        g.setColor(new Color(255, 255, 255, 150));
+        g.drawString("点击任意位置返回首页", getW() - 170, getH() - 30);
     }
 
     private void drawWrappedText(Graphics2D g, String text, int x, int y, int maxWidth, int lineHeight) {
@@ -589,7 +592,7 @@ public class GameBoard extends ElementObj {
         g.setFont(new Font("SansSerif", Font.BOLD, 23));
         g.drawString("Level 3: Contra Peashooter", 34, 36);
         g.setFont(new Font("SansSerif", Font.PLAIN, 15));
-        g.drawString("Move: WASD / Arrow keys    Shoot: Space    Pause: P or Esc", 34, 62);
+        g.drawString("Move: WASD / Arrow keys    Shoot: Space    Transform: F (10s)    Pause: P or Esc", 34, 62);
     }
 
     private void drawHomeScene(Graphics2D g) {
@@ -778,14 +781,9 @@ public class GameBoard extends ElementObj {
             g.setFont(new Font("SansSerif", Font.BOLD, 18));
             g.drawString(selectablePlants[i], x + 14, y + 28);
             g.setFont(new Font("SansSerif", Font.PLAIN, 13));
-            g.drawString(i < 2 ? "可用" : "展示中", x + 14, y + 48);
+            g.drawString("可用", x + 14, y + 48);
         }
 
-        g.setColor(new Color(255, 245, 220));
-        g.setFont(new Font("SansSerif", Font.BOLD, 18));
-        g.drawString("当前默认携带：豌豆射手、向日葵", 68, 350);
-        g.setFont(new Font("SansSerif", Font.PLAIN, 16));
-        g.drawString("先看看门前公路上的僵尸，再准备布阵。", 72, 378);
 
         drawStyledButton(g, PREP_START_BTN_X, PREP_START_BTN_Y, PREP_START_BTN_W, PREP_START_BTN_H,
                 new Color(86, 164, 63), "开始战斗");
@@ -796,7 +794,9 @@ public class GameBoard extends ElementObj {
     private void drawZombiePreviewShowcase(Graphics2D g, int ox) {
         int roadCenterX = BATTLE_BG_X + (int) Math.round(BATTLE_BG_W * 0.885) + ox;
         int roadCenterY = BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.60);
-        drawPreviewZombie(g, roadCenterX, roadCenterY, ZombiePreviewType.BASIC, "普通僵尸");
+        drawPreviewZombie(g, roadCenterX - 12, roadCenterY - 156, ZombiePreviewType.CONE, "路障僵尸");
+        drawPreviewZombie(g, roadCenterX + 24, roadCenterY - 24, ZombiePreviewType.BASIC, "普通僵尸");
+        drawPreviewZombie(g, roadCenterX - 2, roadCenterY + 112, ZombiePreviewType.BUCKET, "铁桶僵尸");
     }
 
     private void drawPreviewZombie(Graphics2D g, int x, int y, ZombiePreviewType type, String label) {
@@ -1300,17 +1300,78 @@ public class GameBoard extends ElementObj {
         int row = random.nextInt(rows);
         int x = isContraMode() ? getW() + 20 + random.nextInt(160) : BATTLE_BG_X + BATTLE_BG_W - 18;
         int y = getCellY(row) + 12;
-        Zombie zombie = lawnZombieSpawners.get(random.nextInt(lawnZombieSpawners.size())).create(row, x, y);
+        Zombie zombie = createLevel1Zombie(row, x, y);
         ElementManager.getManager().addElement(zombie, GameElement.ZOMBIE);
         spawnedZombies++;
     }
 
     private void spawnGunZombie() {
         int[] spawnPoint = chooseContraZombieSpawnPoint();
-        GunZombie zombie = contraZombieSpawners.get(random.nextInt(contraZombieSpawners.size()))
-                .create(spawnPoint[0], spawnPoint[1]);
+        GunZombie zombie = createLevel3Zombie(spawnPoint[0], spawnPoint[1] - 82);
         ElementManager.getManager().addElement(zombie, GameElement.ZOMBIE);
         spawnedZombies++;
+    }
+
+    private Zombie createLevel1Zombie(int row, int x, int y) {
+        int spawnOrder = spawnedZombies + 1;
+        int remainingSlots = getMaxZombies() - spawnedZombies;
+
+        if (shouldSpawnLevel1Bucket(spawnOrder, remainingSlots)) {
+            lawnBucketSpawned++;
+            return new BucketZombie(row, x, y);
+        }
+        if (shouldSpawnLevel1Roadblock(spawnOrder, remainingSlots)) {
+            lawnRoadblockSpawned++;
+            return new RoadblockZombie(row, x, y);
+        }
+        return new Zombie(row, x, y);
+    }
+
+    private GunZombie createLevel3Zombie(int x, int y) {
+        int spawnOrder = spawnedZombies + 1;
+        int remainingSlots = getMaxZombies() - spawnedZombies;
+        if (shouldSpawnLevel3Roadblock(spawnOrder, remainingSlots)) {
+            contraRoadblockSpawned++;
+            return new RoadblockGunZombie(x, y);
+        }
+        return new BasicGunZombie(x, y);
+    }
+
+    private boolean shouldSpawnLevel1Roadblock(int spawnOrder, int remainingSlots) {
+        if (spawnOrder <= LEVEL1_ROADBLOCK_UNLOCK_AFTER || lawnRoadblockSpawned >= LEVEL1_ROADBLOCK_MAX) {
+            return false;
+        }
+        int remainingRoadblocks = LEVEL1_ROADBLOCK_MAX - lawnRoadblockSpawned;
+        return shouldSpawnSpecialZombie(remainingRoadblocks, remainingSlots, LEVEL1_ROADBLOCK_CHANCE);
+    }
+
+    private boolean shouldSpawnLevel1Bucket(int spawnOrder, int remainingSlots) {
+        if (spawnOrder <= LEVEL1_BUCKET_UNLOCK_AFTER || lawnBucketSpawned >= LEVEL1_BUCKET_MAX) {
+            return false;
+        }
+        int remainingBuckets = LEVEL1_BUCKET_MAX - lawnBucketSpawned;
+        return shouldSpawnSpecialZombie(remainingBuckets, remainingSlots, LEVEL1_BUCKET_CHANCE);
+    }
+
+    private boolean shouldSpawnLevel3Roadblock(int spawnOrder, int remainingSlots) {
+        if (contraRoadblockSpawned >= LEVEL3_ROADBLOCK_MAX) {
+            return false;
+        }
+        if (spawnOrder <= 1) {
+            return false;
+        }
+        int remainingRoadblocks = LEVEL3_ROADBLOCK_MAX - contraRoadblockSpawned;
+        return shouldSpawnSpecialZombie(remainingRoadblocks, remainingSlots, 0.22);
+    }
+
+    private boolean shouldSpawnSpecialZombie(int remainingSpecials, int remainingSlots, double chance) {
+        if (remainingSpecials <= 0 || remainingSlots <= 0) {
+            return false;
+        }
+        if (remainingSpecials >= remainingSlots) {
+            return true;
+        }
+        return random.nextDouble() < chance;
     }
 
     private void spawnContraBoss() {
@@ -1429,6 +1490,9 @@ public class GameBoard extends ElementObj {
         clearPlantGrid();
         totalKills = 0;
         spawnedZombies = 0;
+        lawnRoadblockSpawned = 0;
+        lawnBucketSpawned = 0;
+        contraRoadblockSpawned = 0;
         zombieSpawnCounter = 0;
         contraBossSpawned = false;
         contraBossDefeated = false;
@@ -1493,6 +1557,9 @@ public class GameBoard extends ElementObj {
         clearPlantGrid();
         totalKills = 0;
         spawnedZombies = 0;
+        lawnRoadblockSpawned = 0;
+        lawnBucketSpawned = 0;
+        contraRoadblockSpawned = 0;
         zombieSpawnCounter = 0;
         sunDropCounter = 0;
         startProtectCounter = 0;
@@ -1639,6 +1706,10 @@ public class GameBoard extends ElementObj {
         return inRect(mouseX, mouseY, SUNFLOWER_CARD_X, SUNFLOWER_CARD_Y, CARD_W, CARD_H);
     }
 
+    public boolean isInDoublePeaCard(int mouseX, int mouseY) {
+        return inRect(mouseX, mouseY, DOUBLE_PEA_CARD_X, DOUBLE_PEA_CARD_Y, CARD_W, CARD_H);
+    }
+
     public boolean isInShovelButton(int mouseX, int mouseY) {
         return inRect(mouseX, mouseY, SHOVEL_BTN_X, SHOVEL_BTN_Y, SHOVEL_BTN_W, SHOVEL_BTN_H);
     }
@@ -1676,6 +1747,10 @@ public class GameBoard extends ElementObj {
 
     public void selectSunflower() {
         selectPlant(PlantType.SUNFLOWER);
+    }
+
+    public void selectDoublePeaShooter() {
+        selectPlant(PlantType.DOUBLE_PEA_SHOOTER);
     }
 
     private void selectPlant(PlantType plantType) {
@@ -1754,6 +1829,10 @@ public class GameBoard extends ElementObj {
 
     public int getSunflowerCost() {
         return SUNFLOWER_COST;
+    }
+
+    public int getDoublePeaShooterCost() {
+        return PlantType.DOUBLE_PEA_SHOOTER.getCost();
     }
 
     public PlantType getSelectedPlantType() {
@@ -1906,6 +1985,14 @@ public class GameBoard extends ElementObj {
 
     public int getSunflowerCardY() {
         return SUNFLOWER_CARD_Y;
+    }
+
+    public int getDoublePeaCardX() {
+        return DOUBLE_PEA_CARD_X;
+    }
+
+    public int getDoublePeaCardY() {
+        return DOUBLE_PEA_CARD_Y;
     }
 
     public int getPlantCardW() {
@@ -2118,6 +2205,24 @@ public class GameBoard extends ElementObj {
 
     public int getContraPlayerHealth() {
         return contraPlayer == null ? 0 : contraPlayer.getHealth();
+    }
+
+    public boolean isContraDoublePeaActive() {
+        return contraPlayer != null && contraPlayer.isDoublePeaModeActive();
+    }
+
+    public String getContraDoublePeaStatusLabel() {
+        if (contraPlayer == null) {
+            return "--";
+        }
+        if (contraPlayer.isDoublePeaModeActive()) {
+            double seconds = contraPlayer.getDoublePeaTicksRemaining() * 30.0 / 1000.0;
+            return String.format("进行中 %.1fs", seconds);
+        }
+        if (contraPlayer.isDoublePeaAvailable()) {
+            return "按 F 启动";
+        }
+        return "已结束";
     }
 
     private enum ZombiePreviewType {

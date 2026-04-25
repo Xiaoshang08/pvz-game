@@ -46,12 +46,16 @@ public class Zombie extends ElementObj implements DamageableEnemy, LaneEnemy {
         GameBoard board = GameBoard.getInstance();
         int x = board == null ? getX() : board.toScreenX(getX());
         int y = getY();
+        int drawW = getRenderWidth(board);
+        int drawH = getRenderHeight(board);
+        int drawX = x - (drawW - getW()) / 2;
+        int drawY = y + getH() - drawH;
 
         BufferedImage sprite = getSprite();
         if (sprite != null) {
-            GameImage.draw(g, sprite, x - 2, y - 18, 52, 84);
+            GameImage.draw(g, sprite, drawX, drawY, drawW, drawH);
         } else {
-            drawFallback(g, x, y);
+            drawFallback(g, drawX, drawY);
         }
 
         drawStatus(g, x, y);
@@ -171,6 +175,14 @@ public class Zombie extends ElementObj implements DamageableEnemy, LaneEnemy {
 
     protected int getAttackInterval() {
         return ATTACK_INTERVAL;
+    }
+
+    protected int getRenderWidth(GameBoard board) {
+        return board == null ? 52 : Math.max(getW(), board.getCellW() - 8);
+    }
+
+    protected int getRenderHeight(GameBoard board) {
+        return board == null ? 84 : Math.max(getH(), board.getCellH() - 4);
     }
 
     public int getRow() { return row; }

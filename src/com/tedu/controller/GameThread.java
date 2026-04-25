@@ -122,6 +122,7 @@ public class GameThread extends Thread {
                     continue;
                 }
                 if (bullet.pk(zombieObj)) {
+                    Bullet.spawnImpact(bullet.getX() + bullet.getW() / 2, bullet.getY() + bullet.getH() / 2);
                     ((DamageableEnemy) zombieObj).takeDamage(bullet.getDamage());
                     bullet.setLive(false);
                     break;
@@ -187,6 +188,7 @@ public class GameThread extends Thread {
                     continue;
                 }
                 if (bullet.pk(zombieObj)) {
+                    Bullet.spawnImpact(bullet.getX() + bullet.getW() / 2, bullet.getY() + bullet.getH() / 2);
                     ((DamageableEnemy) zombieObj).takeDamage(bullet.getDamage());
                     bullet.setLive(false);
                     break;

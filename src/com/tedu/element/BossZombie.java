@@ -50,7 +50,8 @@ public class BossZombie extends GunZombie {
         g.drawString(BOSS_NAME, textX, textY);
     }
 
-    private void drawHealthBar(Graphics g, int x, int y) {
+    @Override
+    protected void drawHealthBar(Graphics g, int x, int y) {
         int barX = x + 28;
         int barY = y - 14;
         int barW = getW() - 56;

@@ -22,11 +22,13 @@ import com.tedu.element.Bullet;
 import com.tedu.element.BossZombie;
 import com.tedu.element.ContraPeaBullet;
 import com.tedu.element.ContraPlayer;
+import com.tedu.element.DamageableEnemy;
 import com.tedu.element.ElementObj;
 import com.tedu.element.EnemyBullet;
 import com.tedu.element.FireDoor;
 import com.tedu.element.GunZombie;
 import com.tedu.element.GameBoard;
+import com.tedu.element.LaneEnemy;
 import com.tedu.element.Plant;
 import com.tedu.element.WaterDoor;
 import com.tedu.element.Zombie;
@@ -112,15 +114,16 @@ public class GameThread extends Thread {
             }
             Bullet bullet = (Bullet) bulletObj;
             for (ElementObj zombieObj : zombies) {
-                if (!zombieObj.isLive()) {
+                if (!zombieObj.isLive() || !(zombieObj instanceof DamageableEnemy) || !(zombieObj instanceof LaneEnemy)) {
                     continue;
                 }
-                Zombie zombie = (Zombie) zombieObj;
+                LaneEnemy zombie = (LaneEnemy) zombieObj;
                 if (bullet.getRow() != zombie.getRow()) {
                     continue;
                 }
-                if (bullet.pk(zombie)) {
-                    zombie.takeDamage(bullet.getDamage());
+                if (bullet.pk(zombieObj)) {
+                    Bullet.spawnImpact(bullet.getX() + bullet.getW() / 2, bullet.getY() + bullet.getH() / 2);
+                    ((DamageableEnemy) zombieObj).takeDamage(bullet.getDamage());
                     bullet.setLive(false);
                     break;
                 }
@@ -181,12 +184,12 @@ public class GameThread extends Thread {
             }
             ContraPeaBullet bullet = (ContraPeaBullet) bulletObj;
             for (ElementObj zombieObj : zombies) {
-                if (!zombieObj.isLive() || !(zombieObj instanceof GunZombie)) {
+                if (!zombieObj.isLive() || !(zombieObj instanceof DamageableEnemy)) {
                     continue;
                 }
-                GunZombie zombie = (GunZombie) zombieObj;
-                if (bullet.pk(zombie)) {
-                    zombie.takeDamage(bullet.getDamage());
+                if (bullet.pk(zombieObj)) {
+                    Bullet.spawnImpact(bullet.getX() + bullet.getW() / 2, bullet.getY() + bullet.getH() / 2);
+                    ((DamageableEnemy) zombieObj).takeDamage(bullet.getDamage());
                     bullet.setLive(false);
                     break;
                 }

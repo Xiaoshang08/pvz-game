@@ -7,6 +7,8 @@ package com.tedu.element;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import com.tedu.manager.ElementManager;
+import com.tedu.manager.GameElement;
 import com.tedu.show.GameJFrame;
 
 public class Bullet extends ElementObj {
@@ -37,6 +39,10 @@ public class Bullet extends ElementObj {
         if (getX() > GameJFrame.GameX) {
             setLive(false);
         }
+    }
+
+    public static void spawnImpact(int centerX, int centerY) {
+        ElementManager.getManager().addElement(new PeaImpactEffect(centerX, centerY), GameElement.EFFECT);
     }
 
     public int getDamage() { return DAMAGE; }

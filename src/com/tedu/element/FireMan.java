@@ -49,10 +49,33 @@ public class FireMan extends ElementObj {
     @Override
     protected void move() {
         int dx = 0;
-        if (left)
+        if (left) {
             dx = -getMoveSpeed();
-        if (right)
+            // 向左走时切换为 fireman_left.png
+            ImageIcon leftIcon = GameLoad.imgMap.get("fireman_left");
+            if (leftIcon != null && (this.getIcon() == null || this.getIcon() != leftIcon)) {
+                setIcon(leftIcon);
+                setW(leftIcon.getIconWidth());
+                setH(leftIcon.getIconHeight());
+            }
+        } else if (right) {
             dx = getMoveSpeed();
+            // 向右走时切换为 fireman_right.png
+            ImageIcon rightIcon = GameLoad.imgMap.get("fireman_right");
+            if (rightIcon != null && (this.getIcon() == null || this.getIcon() != rightIcon)) {
+                setIcon(rightIcon);
+                setW(rightIcon.getIconWidth());
+                setH(rightIcon.getIconHeight());
+            }
+        } else {
+            // 静止时显示 fire_man.png
+            ImageIcon defaultIcon = GameLoad.imgMap.get("fire_man");
+            if (defaultIcon != null && (this.getIcon() == null || this.getIcon() != defaultIcon)) {
+                setIcon(defaultIcon);
+                setW(defaultIcon.getIconWidth());
+                setH(defaultIcon.getIconHeight());
+            }
+        }
         if (dx != 0)
             moveX(dx);
 
@@ -77,9 +100,13 @@ public class FireMan extends ElementObj {
         setX(Integer.parseInt(split[0]));
         setY(Integer.parseInt(split[1]));
         ImageIcon icon = GameLoad.imgMap.get("fire_man");
-        setIcon(icon);
-        setW(icon.getIconWidth());
-        setH(icon.getIconHeight());
+        if (icon == null) {
+            System.err.println("FireMan: fire_man 图片加载失败，请检查 assets/images/icefire/fire_man.png 是否存在");
+        } else {
+            setIcon(icon);
+            setW(icon.getIconWidth());
+            setH(icon.getIconHeight());
+        }
         setRoleType("fire");
         moveSpeed = 5;
         setRequiredDiamondCount(getRequiredDiamondCount());

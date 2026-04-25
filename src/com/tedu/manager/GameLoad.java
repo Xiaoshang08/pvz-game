@@ -73,10 +73,24 @@ public class GameLoad {
             prop.load(is);
             Set<Object> keys = prop.keySet();
 
-            // 获取项目根目录下的 assets/images/icefire 文件夹
-            File imgDir = new File("assets/images/icefire");
-            if (!imgDir.exists() || !imgDir.isDirectory()) {
-                System.err.println("assets/images/icefire 目录不存在，请确认路径：" + imgDir.getAbsolutePath());
+            // 尝试多种可能的图片目录路径
+            File imgDir = null;
+            String[] possiblePaths = {
+                "assets/images/icefire",
+                "./assets/images/icefire",
+                "../assets/images/icefire",
+                "d:/Personal/projects/pvz-game/assets/images/icefire"
+            };
+            for (String path : possiblePaths) {
+                File dir = new File(path);
+                if (dir.exists() && dir.isDirectory()) {
+                    imgDir = dir;
+                    System.out.println("找到图片目录: " + imgDir.getAbsolutePath());
+                    break;
+                }
+            }
+            if (imgDir == null) {
+                System.err.println("assets/images/icefire 目录不存在，请确认路径");
                 return;
             }
 

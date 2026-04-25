@@ -1647,6 +1647,7 @@ public class GameBoard extends ElementObj {
         em.getElementsByKey(GameElement.BULLET).clear();
         em.getElementsByKey(GameElement.ENEMY_BULLET).clear();
         em.getElementsByKey(GameElement.SUN).clear();
+        em.getElementsByKey(GameElement.EFFECT).clear();
         em.getElementsByKey(GameElement.FIRE_MAN).clear();
         em.getElementsByKey(GameElement.WATER_MAN).clear();
         em.getElementsByKey(GameElement.FIRE_DOOR).clear();

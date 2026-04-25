@@ -10,6 +10,8 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +178,12 @@ public class GameBoard extends ElementObj {
 
     private final Plant[][] plantGrid = new Plant[rows][cols];
     private final Random random = new Random();
-    private final String[] selectablePlants = { "豌豆射手", "向日葵" };
+    private final String[] selectablePlants = Arrays.stream(PlantType.values())
+            .map(PlantType::getDisplayName)
+            .toArray(String[]::new);
+    private final List<LawnZombieSpawner> lawnZombieSpawners = Collections.singletonList(Zombie::new);
+    private final List<ContraZombieSpawner> contraZombieSpawners = Collections.singletonList(
+            (x, surfaceY) -> new GunZombie(x, surfaceY - 82));
 
     private int zombieSpawnCounter = 0;
     private int sunDropCounter = 0;
@@ -263,9 +270,46 @@ public class GameBoard extends ElementObj {
         return instance;
     }
 
+    @FunctionalInterface
+    private interface PlantCreator {
+        Plant create(int row, int col, int x, int y, int w, int h);
+    }
+
+    @FunctionalInterface
+    private interface LawnZombieSpawner {
+        Zombie create(int row, int x, int y);
+    }
+
+    @FunctionalInterface
+    private interface ContraZombieSpawner {
+        GunZombie create(int x, int surfaceY);
+    }
+
     public enum PlantType {
-        PEA_SHOOTER,
-        SUNFLOWER
+        PEA_SHOOTER("豌豆射手", 100, PeaShooter::new),
+        SUNFLOWER("向日葵", 50, Sunflower::new);
+
+        private final String displayName;
+        private final int cost;
+        private final PlantCreator creator;
+
+        PlantType(String displayName, int cost, PlantCreator creator) {
+            this.displayName = displayName;
+            this.cost = cost;
+            this.creator = creator;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public int getCost() {
+            return cost;
+        }
+
+        public Plant create(int row, int col, int x, int y, int w, int h) {
+            return creator.create(row, col, x, y, w, h);
+        }
     }
 
     private BufferedImage loadLocalImage(String path) {
@@ -1231,12 +1275,7 @@ public class GameBoard extends ElementObj {
             return;
         }
         currentSun -= cost;
-        Plant plant;
-        if (selectedPlantType == PlantType.SUNFLOWER) {
-            plant = new Sunflower(row, col, getCellX(col), getCellY(row), cellW, cellH);
-        } else {
-            plant = new PeaShooter(row, col, getCellX(col), getCellY(row), cellW, cellH);
-        }
+        Plant plant = selectedPlantType.create(row, col, getCellX(col), getCellY(row), cellW, cellH);
         plantGrid[row][col] = plant;
         ElementManager.getManager().addElement(plant, GameElement.PLANT);
     }
@@ -1261,13 +1300,16 @@ public class GameBoard extends ElementObj {
         int row = random.nextInt(rows);
         int x = isContraMode() ? getW() + 20 + random.nextInt(160) : BATTLE_BG_X + BATTLE_BG_W - 18;
         int y = getCellY(row) + 12;
-        ElementManager.getManager().addElement(new Zombie(row, x, y), GameElement.ZOMBIE);
+        Zombie zombie = lawnZombieSpawners.get(random.nextInt(lawnZombieSpawners.size())).create(row, x, y);
+        ElementManager.getManager().addElement(zombie, GameElement.ZOMBIE);
         spawnedZombies++;
     }
 
     private void spawnGunZombie() {
         int[] spawnPoint = chooseContraZombieSpawnPoint();
-        ElementManager.getManager().addElement(new GunZombie(spawnPoint[0], spawnPoint[1] - 82), GameElement.ZOMBIE);
+        GunZombie zombie = contraZombieSpawners.get(random.nextInt(contraZombieSpawners.size()))
+                .create(spawnPoint[0], spawnPoint[1]);
+        ElementManager.getManager().addElement(zombie, GameElement.ZOMBIE);
         spawnedZombies++;
     }
 
@@ -1629,12 +1671,15 @@ public class GameBoard extends ElementObj {
     }
 
     public void selectPeaShooter() {
-        selectedPlantType = PlantType.PEA_SHOOTER;
-        shovelMode = false;
+        selectPlant(PlantType.PEA_SHOOTER);
     }
 
     public void selectSunflower() {
-        selectedPlantType = PlantType.SUNFLOWER;
+        selectPlant(PlantType.SUNFLOWER);
+    }
+
+    private void selectPlant(PlantType plantType) {
+        selectedPlantType = plantType;
         shovelMode = false;
     }
 
@@ -1716,7 +1761,7 @@ public class GameBoard extends ElementObj {
     }
 
     public int getSelectedPlantCost() {
-        return selectedPlantType == PlantType.SUNFLOWER ? SUNFLOWER_COST : PEA_SHOOTER_COST;
+        return selectedPlantType.getCost();
     }
 
     public void addSun(int sun) {
@@ -1748,8 +1793,7 @@ public class GameBoard extends ElementObj {
     public boolean hasZombieInRow(int row) {
         List<ElementObj> zombies = ElementManager.getManager().getElementsByKey(GameElement.ZOMBIE);
         for (ElementObj obj : zombies) {
-            Zombie zombie = (Zombie) obj;
-            if (zombie.isLive() && zombie.getRow() == row)
+            if (obj.isLive() && obj instanceof LaneEnemy && ((LaneEnemy) obj).getRow() == row)
                 return true;
         }
         return false;

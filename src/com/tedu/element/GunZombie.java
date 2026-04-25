@@ -6,7 +6,7 @@ import java.awt.Graphics;
 import com.tedu.manager.ElementManager;
 import com.tedu.manager.GameElement;
 
-public class GunZombie extends ElementObj {
+public class GunZombie extends ElementObj implements DamageableEnemy {
     private static final double GRAVITY = 0.65;
     private static final double MAX_FALL_SPEED = 14.0;
     private static final int DETECT_RANGE = 640;

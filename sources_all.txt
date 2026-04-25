@@ -4,6 +4,7 @@ src/com/tedu/element/BossZombie.java
 src/com/tedu/element/Bullet.java
 src/com/tedu/element/ContraPeaBullet.java
 src/com/tedu/element/ContraPlayer.java
+src/com/tedu/element/DamageableEnemy.java
 src/com/tedu/element/ElementObj.java
 src/com/tedu/element/EnemyBullet.java
 src/com/tedu/element/FireDiamond.java
@@ -14,6 +15,7 @@ src/com/tedu/element/GameBoard.java
 src/com/tedu/element/GameInfoPanel.java
 src/com/tedu/element/GridCell.java
 src/com/tedu/element/GunZombie.java
+src/com/tedu/element/LaneEnemy.java
 src/com/tedu/element/NormalTerrain.java
 src/com/tedu/element/PeaBulletSprite.java
 src/com/tedu/element/PeaShooter.java

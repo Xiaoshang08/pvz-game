@@ -12,14 +12,15 @@ import java.awt.image.BufferedImage;
 
 import com.tedu.util.GameImage;
 
-public class Zombie extends ElementObj {
+public class Zombie extends ElementObj implements DamageableEnemy, LaneEnemy {
     private static final String IMAGE_PATH = "images/zombies/basic_zombie.png";
     private static final BufferedImage IMAGE = GameImage.get(IMAGE_PATH);
 
     private final int row;
-    private final int speed = 1;
-    private final int moveInterval = 2;
-    private int health = 4;
+    private final int speed;
+    private final int moveInterval;
+    protected int health;
+    private final int maxHealth;
     private Plant attackTarget;
     private int attackCounter = 0;
     private int moveCounter = 0;
@@ -28,8 +29,16 @@ public class Zombie extends ElementObj {
     private boolean reachedHouse = false;
 
     public Zombie(int row, int x, int y) {
-        super(x, y, 42, 62, null);
+        this(row, x, y, 42, 62, 4, 1, 2);
+    }
+
+    protected Zombie(int row, int x, int y, int w, int h, int health, int speed, int moveInterval) {
+        super(x, y, w, h, null);
         this.row = row;
+        this.health = health;
+        this.maxHealth = health;
+        this.speed = speed;
+        this.moveInterval = moveInterval;
     }
 
     @Override
@@ -38,28 +47,14 @@ public class Zombie extends ElementObj {
         int x = board == null ? getX() : board.toScreenX(getX());
         int y = getY();
 
-        if (IMAGE != null) {
-            GameImage.draw(g, IMAGE, x - 2, y - 18, 52, 84);
+        BufferedImage sprite = getSprite();
+        if (sprite != null) {
+            GameImage.draw(g, sprite, x - 2, y - 18, 52, 84);
         } else {
-            g.setColor(new Color(110, 150, 110));
-            g.fillRect(x, y, getW(), getH());
-
-            g.setColor(new Color(155, 204, 155));
-            g.fillOval(x + 6, y - 18, 30, 30);
-
-            g.setColor(Color.BLACK);
-            g.fillOval(x + 13, y - 10, 4, 4);
-            g.fillOval(x + 25, y - 10, 4, 4);
-            g.drawLine(x + 14, y - 2, x + 27, y - 2);
+            drawFallback(g, x, y);
         }
 
-        g.setColor(new Color(170, 50, 50));
-        g.drawString("HP:" + health, x, y - 24);
-
-        if (attackTarget != null && attackTarget.isLive()) {
-            g.setColor(Color.ORANGE);
-            g.drawString("EAT!", x + 2, y + getH() + 16);
-        }
+        drawStatus(g, x, y);
     }
 
     @Override
@@ -71,7 +66,7 @@ public class Zombie extends ElementObj {
 
         if (attackTarget != null && attackTarget.isLive()) {
             attackCounter++;
-            if (attackCounter >= ATTACK_INTERVAL) {
+            if (attackCounter >= getAttackInterval()) {
                 attackCounter = 0;
                 attackTarget.takeDamage(1);
             }
@@ -145,6 +140,37 @@ public class Zombie extends ElementObj {
 
     public boolean hasEnteredHouse() {
         return reachedHouse;
+    }
+
+    protected BufferedImage getSprite() {
+        return IMAGE;
+    }
+
+    protected void drawFallback(Graphics g, int x, int y) {
+        g.setColor(new Color(110, 150, 110));
+        g.fillRect(x, y, getW(), getH());
+
+        g.setColor(new Color(155, 204, 155));
+        g.fillOval(x + 6, y - 18, 30, 30);
+
+        g.setColor(Color.BLACK);
+        g.fillOval(x + 13, y - 10, 4, 4);
+        g.fillOval(x + 25, y - 10, 4, 4);
+        g.drawLine(x + 14, y - 2, x + 27, y - 2);
+    }
+
+    protected void drawStatus(Graphics g, int x, int y) {
+        g.setColor(new Color(170, 50, 50));
+        g.drawString("HP:" + health + "/" + maxHealth, x, y - 24);
+
+        if (attackTarget != null && attackTarget.isLive()) {
+            g.setColor(Color.ORANGE);
+            g.drawString("EAT!", x + 2, y + getH() + 16);
+        }
+    }
+
+    protected int getAttackInterval() {
+        return ATTACK_INTERVAL;
     }
 
     public int getRow() { return row; }

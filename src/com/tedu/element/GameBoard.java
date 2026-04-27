@@ -1,5 +1,9 @@
 package com.tedu.element;
 
+import com.tedu.manager.ElementManager;
+import com.tedu.manager.GameElement;
+import com.tedu.manager.GameLoad;
+import com.tedu.util.GameImage;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -8,6 +12,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,13 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-
-import com.tedu.manager.ElementManager;
-import com.tedu.manager.GameElement;
-import com.tedu.manager.GameLoad;
-import com.tedu.util.GameImage;
 
 /**
  * GameBoard：游戏主战场背景与状态中心。
@@ -33,6 +32,7 @@ import com.tedu.util.GameImage;
  * - 第三关结局动画
  */
 public class GameBoard extends ElementObj {
+
     private static GameBoard instance;
     private BufferedImage homeBackgroundImage;
     private BufferedImage levelSelectBackgroundImage;
@@ -261,6 +261,50 @@ public class GameBoard extends ElementObj {
             null // 第三关胜利后不显示普通胜利界面，直接播放结局
     };
     private final String endingText = "恭喜你成功通关！\n\n暗影要塞已经被攻破，森林重新迎来了光亮。\n\n感谢你的参与，感谢你一路守护这片草坪与森林伙伴。";
+
+    // ==================== 剧情系统新增字段 ====================
+    private boolean storyPlayed = false;                // 开场剧情是否已播放
+    private Map<Integer, Boolean> levelTipShown = new HashMap<>(); // 各关卡提示是否已显示
+    private String winMessage = null;                   // 胜利后额外显示的台词
+    private boolean endingPlaying = false;              // 是否正在播放结局
+    private long endingStartTime = 0;                   // 结局开始时间
+    private static final long ENDING_DURATION = 4000;   // 结局显示时间（毫秒）
+
+    // 剧情文本
+    private final String[] openingStory = {
+        "深夜，我被一阵沙沙声惊醒。窗外的草坪上，无数双绿眼睛在晃动——是僵尸！",
+        "这是红月仙给我们的第一个困难！",
+        "向日葵急切地对我喊：“它们来了！快用阳光唤醒大家，守住这条路！”",
+        "我握紧弹弓，深吸一口气：“好，那就让它们看看，这片草坪谁做主。”",
+        "来吧，第一波——"
+    };
+    private int openingIndex = 0;
+    private long openingLastTime = 0;
+    private static final long OPENING_DELAY = 2000; // 每句显示2秒
+
+    // 关卡剧情和玩法提示
+    private final String[] levelStory = {
+        // 第一关
+        "深夜，我被一阵沙沙声惊醒。窗外的草坪上，无数双绿眼睛在晃动——是僵尸！\n向日葵急切地对我喊：“它们来了！快用阳光唤醒大家，守住这条路！”\n我握紧弹弓，深吸一口气：“好，那就让它们看看，这片草坪谁做主。”\n来吧，第一波——",
+        // 第二关
+        "击退僵尸后，我穿过迷雾，来到冰火森林。这里一半冰封，一半燃烧。\n两位精灵——冰仔和火仔——被困在结界中，互相敌对。他们的能量核心被锁在迷宫深处。\n我必须同时解开冰之迷宫和火之迷宫，找回冰火精魄。\n冰面上只能滑行，火地上需要躲避熔岩……每一步都要思考。\n只有冰与火联手，才能打开通往要塞的路。",
+        // 第三关
+        "冰火之力涌入弹弓，我冲进暗影要塞。黑暗法师就在最深处。\n影怪从四面八方扑来——它们速度快、护甲厚，但弱点在胸口核心。\n我用冰弹冻结高速敌人，用火弹烧毁护甲，瞄准核心一下一下地射击。\n子弹越来越密，但我不能后退。\n最后一战……为了这片森林，为了所有伙伴！"
+    };
+    private final String[] levelGameplay = {
+        // 第一关玩法
+        "玩法：\n• 点击植物卡片选择豌豆射手或向日葵\n• 点击草坪格子种植植物\n• 收集阳光，抵御僵尸\n• 不要让僵尸走到最左边！",
+        // 第二关玩法
+        "玩法：\n• 控制角色在冰面/火地上移动\n• 收集冰之精魄和火之精魄\n• 避开陷阱，注意冰冻、火焰和毒液伤害",
+        // 第三关玩法
+        "玩法：\n• 点击空格射击\n• 击中敌人核心造成巨大伤害\n• 躲避敌人子弹幕\n• 消灭所有敌人"
+    };
+    private final String[] winMessages = {
+        "打得漂亮！不过红月仙不会善罢甘休……",
+        "冰火融合！现在弹弓有了元素之力，去给他点颜色看看。",
+        null // 第三关胜利后不显示普通胜利界面，直接播放结局
+    };
+    private final String endingText = "红月仙：“你……究竟是谁？”\n\n我：“只是一个不想让森林哭泣的人。”";
 
     public GameBoard() {
         instance = this;
@@ -563,12 +607,16 @@ public class GameBoard extends ElementObj {
         drawByType(all, GameElement.TRAP_TERRAIN, g);
         drawByType(all, GameElement.FIRE_MAN, g);
         drawByType(all, GameElement.WATER_MAN, g);
+        // 绘制菜单按钮（右上角）
+        drawStyledButton(g, MENU_BTN_X, MENU_BTN_Y, MENU_BTN_W, MENU_BTN_H,
+                new Color(104, 109, 224), "菜单 ≡");
     }
 
     private void drawByType(Map<GameElement, List<ElementObj>> all, GameElement type, Graphics g) {
         for (ElementObj obj : all.get(type)) {
-            if (obj.isLive())
+            if (obj.isLive()) {
                 obj.showElement(g);
+            }
         }
     }
 
@@ -811,8 +859,8 @@ public class GameBoard extends ElementObj {
 
         if (type == ZombiePreviewType.CONE) {
             g.setColor(new Color(242, 131, 36));
-            int[] xs = { x + 14, x + 30, x + 48 };
-            int[] ys = { y + 20, y - 10, y + 20 };
+            int[] xs = {x + 14, x + 30, x + 48};
+            int[] ys = {y + 20, y - 10, y + 20};
             g.fillPolygon(xs, ys, 3);
         } else if (type == ZombiePreviewType.BUCKET) {
             g.setColor(new Color(136, 144, 154));
@@ -834,8 +882,8 @@ public class GameBoard extends ElementObj {
         g.setColor(new Color(222, 184, 122));
         g.fillRect(x + 40, y + 46, w, h);
         g.setColor(new Color(179, 89, 62));
-        int[] roofX = { x + 20, x + 105, x + 190 };
-        int[] roofY = { y + 48, y - 18, y + 48 };
+        int[] roofX = {x + 20, x + 105, x + 190};
+        int[] roofY = {y + 48, y - 18, y + 48};
         g.fillPolygon(scalePoints(roofX, x, scale), scalePoints(roofY, y, scale), 3);
         g.setColor(new Color(130, 81, 49));
         g.fillRect((int) (x + 94 * scale), (int) (y + 98 * scale), (int) (30 * scale), (int) (60 * scale));
@@ -1807,16 +1855,18 @@ public class GameBoard extends ElementObj {
         if (key == KeyEvent.VK_ESCAPE || key == KeyEvent.VK_P) {
             if (paused)
                 resumeGame();
-            else
+            } else {
                 pauseGame();
+            }
             return;
         }
         if (stage == GameStage.PLAYING && isFireIceMode() && !paused && !gameOver && !gameWin) {
             List<ElementObj> fireMen = em.getElementsByKey(GameElement.FIRE_MAN);
             List<ElementObj> waterMen = em.getElementsByKey(GameElement.WATER_MAN);
-            for (ElementObj obj : fireMen)
+            for (ElementObj obj : fireMen) {
                 obj.keyClick(pressed, key);
-            for (ElementObj obj : waterMen)
+            }
+            for (ElementObj obj : waterMen) {
                 obj.keyClick(pressed, key);
         }
     }
@@ -1960,11 +2010,11 @@ public class GameBoard extends ElementObj {
 
     public int getHouseDoorTargetY(int row) {
         int[] laneTargets = {
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
-                BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.55),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.62),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.69),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.76),
+            BATTLE_BG_Y + (int) Math.round(BATTLE_BG_H * 0.83)
         };
         if (row < 0)
             row = 0;

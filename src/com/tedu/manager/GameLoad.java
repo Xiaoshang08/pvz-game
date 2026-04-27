@@ -73,10 +73,24 @@ public class GameLoad {
             prop.load(is);
             Set<Object> keys = prop.keySet();
 
-            // 获取项目根目录下的 assets/images/icefire 文件夹
-            File imgDir = new File("assets/images/icefire");
-            if (!imgDir.exists() || !imgDir.isDirectory()) {
-                System.err.println("assets/images/icefire 目录不存在，请确认路径：" + imgDir.getAbsolutePath());
+            // 尝试多种可能的图片目录路径
+            File imgDir = null;
+            String[] possiblePaths = {
+                "assets/images/icefire",
+                "./assets/images/icefire",
+                "../assets/images/icefire",
+                "d:/Personal/projects/pvz-game/assets/images/icefire"
+            };
+            for (String path : possiblePaths) {
+                File dir = new File(path);
+                if (dir.exists() && dir.isDirectory()) {
+                    imgDir = dir;
+                    System.out.println("找到图片目录: " + imgDir.getAbsolutePath());
+                    break;
+                }
+            }
+            if (imgDir == null) {
+                System.err.println("assets/images/icefire 目录不存在，请确认路径");
                 return;
             }
 
@@ -171,6 +185,8 @@ public class GameLoad {
             waterMan.createElement("64,448");
             em.addElement(waterMan, GameElement.WATER_MAN);
         }
+        // 显示控制提示（持续5秒）
+        em.showTip("冰仔移动：↑（上）、←（左）、→（右）\n火仔移动：W（上）、A（左）、D（右）", 192, 472, 5000);
     }
 
     // ========== 普通模式（植物大战僵尸）原有加载逻辑 ==========

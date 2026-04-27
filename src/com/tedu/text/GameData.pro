@@ -1,5 +1,9 @@
 fire_man=fire_man.png
+fireman_left=fireman_left.png
+fireman_right=fireman_right.png
 water_man=water_man.png
+waterman_left=waterman_left.png
+waterman_right=waterman_right.png
 fire_terrain=fire_terrain.png
 water_terrain=water_terrain.png
 normal_terrain=normal_terrain.png

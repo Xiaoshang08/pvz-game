@@ -12,6 +12,8 @@ import com.tedu.util.GameImage;
 public class ContraPlayer extends ElementObj {
     private static final String IMAGE_PATH = "images/plants/pea_shooter.png";
     private static final BufferedImage IMAGE = GameImage.get(IMAGE_PATH);
+    private static final String DOUBLE_IMAGE_PATH = "images/plants/Double Peashooter.png";
+    private static final BufferedImage DOUBLE_IMAGE = GameImage.get(DOUBLE_IMAGE_PATH);
     private static final int SPEED = 8;
     private static final double GRAVITY = 0.68;
     private static final double JUMP_SPEED = -16.5;
@@ -20,6 +22,8 @@ public class ContraPlayer extends ElementObj {
     private static final int MAX_JUMPS = 2;
     private static final int SHOOT_COOLDOWN = 8;
     private static final int HIT_COOLDOWN = 35;
+    private static final int DOUBLE_PEA_DURATION_TICKS = 333;
+    private static final double DOUBLE_PEA_REFERENCE_ASPECT_RATIO = 713.0 / 790.0;
 
     private boolean left;
     private boolean right;
@@ -33,6 +37,8 @@ public class ContraPlayer extends ElementObj {
     private int health = 10;
     private int shootCooldown;
     private int hitCooldown;
+    private int doublePeaTicksRemaining;
+    private boolean doublePeaAvailable = true;
 
     public ContraPlayer(int x, int y) {
         super(x, y, 68, 76, null);
@@ -44,7 +50,13 @@ public class ContraPlayer extends ElementObj {
         int drawX = board == null ? getX() : board.toScreenX(getX());
         int drawY = getY();
 
-        if (IMAGE != null) {
+        if (isDoublePeaModeActive() && DOUBLE_IMAGE != null) {
+            int drawH = getH() + 12;
+            int maxDrawW = getW() + 24;
+            int drawW = Math.min(maxDrawW, (int) Math.round(drawH * DOUBLE_PEA_REFERENCE_ASPECT_RATIO));
+            int spriteX = drawX + (getW() - drawW) / 2;
+            GameImage.draw(g, DOUBLE_IMAGE, spriteX, drawY - 8, drawW, drawH);
+        } else if (IMAGE != null) {
             GameImage.draw(g, IMAGE, drawX - 8, drawY - 8, getW() + 16, getH() + 12);
         } else {
             g.setColor(new Color(32, 160, 61));
@@ -77,6 +89,8 @@ public class ContraPlayer extends ElementObj {
             down = pressed;
         } else if (pressed && key == KeyEvent.VK_SPACE) {
             shoot();
+        } else if (pressed && key == KeyEvent.VK_F) {
+            activateDoublePeaMode();
         }
     }
 
@@ -100,11 +114,15 @@ public class ContraPlayer extends ElementObj {
         if (board != null) {
             board.updateContraCameraFor(getX());
         }
+        checkContraAbyssDeath(board);
         if (shootCooldown > 0) {
             shootCooldown--;
         }
         if (hitCooldown > 0) {
             hitCooldown--;
+        }
+        if (doublePeaTicksRemaining > 0) {
+            doublePeaTicksRemaining--;
         }
     }
 
@@ -177,6 +195,7 @@ public class ContraPlayer extends ElementObj {
             }
         }
         checkContraWaterDeath(board);
+        checkContraAbyssDeath(board);
     }
 
     private void checkContraWaterDeath(GameBoard board) {
@@ -190,6 +209,17 @@ public class ContraPlayer extends ElementObj {
         }
     }
 
+    private void checkContraAbyssDeath(GameBoard board) {
+        if (board == null || !isLive()) {
+            return;
+        }
+        if (getY() > board.getH()) {
+            health = 0;
+            setLive(false);
+            board.triggerGameOver();
+        }
+    }
+
     private void shoot() {
         if (shootCooldown > 0) {
             return;
@@ -197,7 +227,18 @@ public class ContraPlayer extends ElementObj {
         int bulletX = getX() + getW() - 2;
         int bulletY = getY() + getH() / 2 - 7;
         ElementManager.getManager().addElement(new ContraPeaBullet(bulletX, bulletY), GameElement.BULLET);
+        if (isDoublePeaModeActive()) {
+            ElementManager.getManager().addElement(new ContraPeaBullet(bulletX, bulletY - 14), GameElement.BULLET);
+        }
         shootCooldown = SHOOT_COOLDOWN;
+    }
+
+    private void activateDoublePeaMode() {
+        if (!doublePeaAvailable || isDoublePeaModeActive() || !isLive()) {
+            return;
+        }
+        doublePeaAvailable = false;
+        doublePeaTicksRemaining = DOUBLE_PEA_DURATION_TICKS;
     }
 
     public void takeDamage(int damage) {
@@ -222,5 +263,17 @@ public class ContraPlayer extends ElementObj {
 
     public int getHealth() {
         return health;
+    }
+
+    public boolean isDoublePeaModeActive() {
+        return doublePeaTicksRemaining > 0;
+    }
+
+    public boolean isDoublePeaAvailable() {
+        return doublePeaAvailable;
+    }
+
+    public int getDoublePeaTicksRemaining() {
+        return doublePeaTicksRemaining;
     }
 }

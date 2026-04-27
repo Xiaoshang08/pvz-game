@@ -30,7 +30,7 @@ public class GameJFrame extends JFrame {
     }
 
     public void init() {
-        this.setTitle("植物大战僵尸-框架版");
+        this.setTitle("植物大战僵尸-森林冰火小人版");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLocationRelativeTo(null);
         this.setResizable(false);
